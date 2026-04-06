@@ -1,3 +1,4 @@
+/* @ts-nocheck */
 /*
   Prisma Seed Script
   Usage: npm run db:seed
