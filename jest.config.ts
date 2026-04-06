@@ -9,7 +9,7 @@ const config: Config = {
   coverageProvider: "v8",
   testEnvironment: "jsdom",
   setupFilesAfterEnv: ["<rootDir>/jest.setup.js"],
-  pathNameMapper: {
+  moduleNameMapper: {
     "^@/(.*)$": "<rootDir>/src/$1",
   },
 };
