@@ -1,0 +1,543 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// USER & AUTHENTICATION
+// ============================================
+
+enum UserRole {
+  CUSTOMER
+  MECHANIC
+  ADMIN
+}
+
+model User {
+  id            String     @id @default(cuid())
+  email         String     @unique
+  name          String?
+  passwordHash  String?
+  phone         String?
+  role          UserRole   @default(CUSTOMER)
+  
+  // Profile info
+  profileImage  String?
+  address       String?
+  city          String?
+  province      String?
+  zipCode       String?
+  
+  // Relations
+  vehicles      Vehicle[]
+  orders        Order[]
+  immoRequests  ImmoRequest[]
+  appointments  Appointment[]
+  payments      Payment[]
+  
+  // Account
+  emailVerified DateTime?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+}
+
+// ============================================
+// VEHICLES & ECU/FIRMWARE
+// ============================================
+
+model Vehicle {
+  id            String     @id @default(cuid())
+  userId        String
+  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  year          Int
+  make          String
+  model         String
+  trim          String?
+  vin           String?
+  engineName    String     // e.g., "2.0L Turbo Diesel"
+  transmissionType String   // Manual, Automatic, CVT
+  
+  // Relations
+  ecus          ECU[]
+  immoRequests  ImmoRequest[]
+  
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  
+  @@index([userId])
+}
+
+enum ECUType {
+  ENGINE_ECU
+  TRANSMISSION_TCU
+  BODY_BCM
+  ABS_MODULE
+  AIRBAG_MODULE
+}
+
+model ECU {
+  id            String     @id @default(cuid())
+  vehicleId     String
+  vehicle       Vehicle    @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  
+  ecu_type      ECUType
+  manufacturer  String     // Bosch, Continental, Siemens
+  model         String
+  partNumber    String
+  
+  // Relations
+  firmwareFiles FirmwareFile[]
+  
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  
+  @@index([vehicleId])
+}
+
+enum FirmwareStatus {
+  STOCK
+  TUNED
+  CUSTOM
+}
+
+model FirmwareFile {
+  id            String     @id @default(cuid())
+  ecuId         String?
+  ecu           ECU?       @relation(fields: [ecuId], references: [id], onDelete: SetNull)
+  
+  fileName      String
+  fileHash      String     // SHA256 hash for integrity check
+  fileSizeBytes BigInt
+  fileUrl       String     // AWS S3 signed URL
+  
+  status        FirmwareStatus @default(STOCK)
+  description   String?
+  
+  price         Decimal    // For pay-to-download
+  purchaseCount Int        @default(0)
+  
+  // Relations
+  immoRequests  ImmoRequest[]
+  orderItems    OrderItem[]
+  
+  version       String     // e.g., "v1.0", "v1.1-tuned"
+  uploadedBy    String?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  expiresAt     DateTime?  // For signed URLs
+  
+  @@index([ecuId])
+  @@index([status])
+}
+
+// ============================================
+// IMMO-OFF REQUEST WORKFLOW
+// ============================================
+
+enum ImmoRequestStatus {
+  PENDING_UPLOAD
+  PROCESSING
+  READY_FOR_DOWNLOAD
+  DOWNLOADED
+  COMPLETED
+  CANCELLED
+}
+
+model ImmoRequest {
+  id            String     @id @default(cuid())
+  userId        String
+  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vehicleId     String
+  vehicle       Vehicle    @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  
+  status        ImmoRequestStatus @default(PENDING_UPLOAD)
+  
+  // File references
+  stockFileId   String?
+  stockFile     FirmwareFile? @relation(fields: [stockFileId], references: [id], onDelete: SetNull)
+  
+  // Admin notes & modifications
+  adminNotes    String?
+  modifiedFileUrl String?    // Admin-tuned file from S3
+  
+  // Pricing
+  basePrice     Decimal
+  discount      Decimal    @default(0)
+  totalPrice    Decimal
+  
+  // Optional: Bundle with parts
+  bundledPartIds String[]  @default([]) // Array of part IDs for bundle
+  
+  downloadedAt  DateTime?
+  completedAt   DateTime?
+  
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  
+  @@index([userId])
+  @@index([vehicleId])
+  @@index([status])
+}
+
+// ============================================
+// PARTS & INVENTORY
+// ============================================
+
+enum PartCategory {
+  ENGINE_OILS
+  TRANSMISSION_FLUIDS
+  COOLANTS
+  BRAKE_PADS
+  FILTERS
+  SPARK_PLUGS
+  BELTS_HOSES
+  BATTERIES
+  ELECTRICAL
+  SUSPENSION
+  OTHER
+}
+
+model Part {
+  id            String     @id @default(cuid())
+  sku           String     @unique
+  name          String
+  category      PartCategory
+  description   String?
+  
+  // Pricing
+  costPrice     Decimal
+  retailPrice   Decimal
+  
+  // Inventory
+  totalStock    Int        @default(0)
+  reservedStock Int        @default(0) // For pending orders
+  reorderLevel  Int        @default(10)
+  
+  // Product info
+  manufacturer  String?
+  oemNumber     String?
+  weight        Decimal?   // kg
+  
+  // Relations
+  variants      PartVariant[]
+  compatibility PartCompatibility[]
+  orderItems    OrderItem[]
+  inventoryBatches InventoryBatch[]
+  
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  
+  @@index([category])
+  @@index([sku])
+}
+
+model PartVariant {
+  id            String     @id @default(cuid())
+  partId        String
+  part          Part       @relation(fields: [partId], references: [id], onDelete: Cascade)
+  
+  name          String     // e.g., "5W-30", "Ceramic", "OEM"
+  sku           String     @unique
+  
+  priceAdjustment Decimal  @default(0)
+  stock         Int        @default(0)
+  
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  
+  @@index([partId])
+}
+
+model PartCompatibility {
+  id            String     @id @default(cuid())
+  partId        String
+  part          Part       @relation(fields: [partId], references: [id], onDelete: Cascade)
+  
+  // Compatibility with vehicles (Year-Make-Model-Engine)
+  yearStart     Int
+  yearEnd       Int
+  make          String
+  model         String
+  engineType    String
+  
+  notes         String?
+  
+  createdAt     DateTime   @default(now())
+  
+  @@index([partId])
+  @@index([make, model, yearStart, yearEnd])
+}
+
+model InventoryBatch {
+  id            String     @id @default(cuid())
+  partId        String
+  part          Part       @relation(fields: [partId], references: [id], onDelete: Cascade)
+  
+  batchNumber   String
+  quantity      Int
+  costPerUnit   Decimal
+  
+  warehouse     String     // e.g., "Manila", "Cebu"
+  expiryDate    DateTime?  // For consumables
+  
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  
+  @@index([partId])
+}
+
+// ============================================
+// ORDERS & PAYMENTS
+// ============================================
+
+enum OrderStatus {
+  PENDING_PAYMENT
+  PAYMENT_CONFIRMED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  COMPLETED
+  CANCELLED
+  REFUNDED
+}
+
+model Order {
+  id            String     @id @default(cuid())
+  userId        String
+  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  status        OrderStatus @default(PENDING_PAYMENT)
+  orderNumber   String     @unique
+  
+  // Shipping info
+  shippingAddress String?
+  shippingCity  String?
+  shippingProvince String?
+  shippingZip   String?
+  
+  trackingNumber String?
+  estimatedDelivery DateTime?
+  
+  // Totals
+  subtotal      Decimal
+  shippingCost  Decimal    @default(0)
+  tax           Decimal    @default(0)
+  totalAmount   Decimal
+  
+  // Relations
+  items         OrderItem[]
+  payment       Payment?
+  
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  deliveredAt   DateTime?
+  
+  @@index([userId])
+  @@index([orderNumber])
+  @@index([status])
+}
+
+model OrderItem {
+  id            String     @id @default(cuid())
+  orderId       String
+  order         Order      @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  // Can be either part or firmware file
+  partId        String?
+  part          Part?      @relation(fields: [partId], references: [id], onDelete: SetNull)
+  
+  firmwareFileId String?
+  firmwareFile  FirmwareFile? @relation(fields: [firmwareFileId], references: [id], onDelete: SetNull)
+  
+  quantity      Int        @default(1)
+  unitPrice     Decimal
+  totalPrice    Decimal
+  
+  createdAt     DateTime   @default(now())
+  
+  @@index([orderId])
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  STRIPE
+  GCASH
+  MAYA
+  BANK_TRANSFER
+}
+
+model Payment {
+  id            String     @id @default(cuid())
+  userId        String
+  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orderId       String     @unique
+  order         Order      @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  method        PaymentMethod
+  status        PaymentStatus @default(PENDING)
+  amount        Decimal
+  
+  // Payment gateway refs
+  transactionId String?
+  stripePaymentIntentId String?
+  gcashReferenceId String?
+  mayaReferenceId String?
+  
+  currency      String     @default("PHP")
+  
+  // Webhook tracking
+  webhookData   String?    // Raw JSON from gateway
+  
+  completedAt   DateTime?
+  
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  
+  @@index([userId])
+  @@index([status])
+}
+
+// ============================================
+// SERVICES & APPOINTMENTS
+// ============================================
+
+enum ServiceType {
+  OIL_CHANGE
+  FILTER_REPLACEMENT
+  BRAKE_SERVICE
+  TIRE_SERVICE
+  TUNE_UP
+  DIAGNOSTICS
+  CUSTOM_TUNING
+  INSPECTION
+  OTHER
+}
+
+model Service {
+  id            String     @id @default(cuid())
+  name          String
+  type          ServiceType
+  description   String?
+  
+  basePrice     Decimal
+  estimatedDurationMinutes Int // for scheduling
+  
+  isActive      Boolean    @default(true)
+  
+  // Relations
+  appointments  Appointment[]
+  
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+}
+
+model Bay {
+  id            String     @id @default(cuid())
+  name          String     // "Bay 1", "Bay 2", etc.
+  location      String     // Location in shop
+  
+  isActive      Boolean    @default(true)
+  maxCapacity   Int        @default(1)
+  
+  // Operating hours
+  operatingHoursStart String @default("08:00") // 24-hour format
+  operatingHoursEnd   String @default("18:00")
+  
+  // Relations
+  appointments  Appointment[]
+  
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+model Appointment {
+  id            String     @id @default(cuid())
+  userId        String
+  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  serviceId     String
+  service       Service    @relation(fields: [serviceId], references: [id])
+  
+  bayId         String
+  bay           Bay        @relation(fields: [bayId], references: [id])
+  
+  status        AppointmentStatus @default(SCHEDULED)
+  
+  scheduledStart DateTime
+  scheduledEnd   DateTime
+  actualStart    DateTime?
+  actualEnd      DateTime?
+  
+  mechanicNotes String?
+  customerNotes String?
+  
+  // Service photos/attachments
+  photoUrls     String[]   @default([])
+  
+  // Pricing
+  servicePrice  Decimal
+  
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  
+  @@index([userId])
+  @@index([serviceId])
+  @@index([bayId])
+  @@index([status])
+  @@index([scheduledStart])
+}
+
+// ============================================
+// AUDIT & LOGGING
+// ============================================
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  DOWNLOAD
+  PAYMENT
+  IMMO_REQUEST_CREATED
+  IMMO_REQUEST_COMPLETED
+  INVENTORY_ADJUSTED
+  APPOINTMENT_CREATED
+  APPOINTMENT_COMPLETED
+}
+
+model AuditLog {
+  id            String     @id @default(cuid())
+  action        AuditAction
+  userId        String?
+  entityType    String     // e.g., "User", "Order", "ImmoRequest"
+  entityId      String
+  changes       String?    // JSON of what changed
+  
+  createdAt     DateTime   @default(now())
+  
+  @@index([userId])
+  @@index([entityType])
+  @@index([action])
+}

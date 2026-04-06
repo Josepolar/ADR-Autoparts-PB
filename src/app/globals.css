@@ -1,0 +1,166 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================
+   Neo-Industrial Dark Mode - Global Styles
+   ============================================ */
+
+:root {
+  --color-cyber-blue: #00d4ff;
+  --color-nardo-gray: #6d6e71;
+  --color-vivid-amber: #ffb400;
+  --color-surface-dark: #111111;
+  --color-surface-light: #1a1a1c;
+  --color-surface-alt: #282829;
+  --color-text-primary: #f1f1f3;
+  --color-text-secondary: #a8a8ae;
+  --color-text-muted: #6d6e71;
+}
+
+@layer base {
+  html {
+    @apply scroll-smooth;
+  }
+
+  body {
+    @apply bg-nardo-gray-900 text-text-primary;
+  }
+
+  a {
+    @apply text-cyber-blue hover:text-cyber-blue-400 transition-colors duration-250;
+  }
+
+  button {
+    @apply transition-all duration-250;
+  }
+
+  /* Scrollbar styling for dark mode */
+  ::-webkit-scrollbar {
+    @apply w-2 h-2;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-nardo-gray-800;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-nardo-gray-600 hover:bg-nardo-gray-500 rounded;
+  }
+}
+
+@layer components {
+  /* Primary Button - Cyber Blue CTA */
+  .btn-primary {
+    @apply inline-flex items-center justify-center px-4 py-2 bg-cyber-blue text-nardo-gray-900 font-semibold rounded-lg hover:bg-cyber-blue-400 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-250 shadow-lg hover:shadow-glow-blue;
+  }
+
+  /* Secondary Button - Nardo Gray */
+  .btn-secondary {
+    @apply inline-flex items-center justify-center px-4 py-2 bg-nardo-gray-700 text-text-primary font-semibold rounded-lg hover:bg-nardo-gray-600 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-250;
+  }
+
+  /* Amber CTA Button */
+  .btn-amber {
+    @apply inline-flex items-center justify-center px-4 py-2 bg-vivid-amber text-nardo-gray-900 font-semibold rounded-lg hover:bg-vivid-amber-400 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-250 shadow-lg hover:shadow-glow-amber;
+  }
+
+  /* Card component */
+  .card {
+    @apply bg-nardo-gray-800 border border-nardo-gray-700 rounded-lg p-6 shadow-md hover:shadow-lg transition-shadow duration-250;
+  }
+
+  /* Input field */
+  .input {
+    @apply w-full px-4 py-2 bg-nardo-gray-800 border border-nardo-gray-700 rounded-lg text-text-primary placeholder-text-muted focus:outline-none focus:border-cyber-blue focus:ring-2 focus:ring-cyber-blue focus:ring-opacity-50 transition-all duration-250;
+  }
+
+  /* Badge */
+  .badge {
+    @apply inline-block px-3 py-1 text-sm font-semibold rounded-full bg-nardo-gray-700 text-text-primary;
+  }
+
+  .badge-success {
+    @apply bg-green-900 text-green-200;
+  }
+
+  .badge-warning {
+    @apply bg-yellow-900 text-yellow-200;
+  }
+
+  .badge-danger {
+    @apply bg-red-900 text-red-200;
+  }
+
+  .badge-info {
+    @apply bg-cyber-blue-900 text-cyber-blue-200;
+  }
+
+  /* Section heading */
+  .section-heading {
+    @apply text-3xl font-bold text-text-primary tracking-tight;
+  }
+
+  /* Subsection heading */
+  .subsection-heading {
+    @apply text-xl font-semibold text-text-primary;
+  }
+
+  /* Loading spinner */
+  .loader {
+    @apply inline-block w-8 h-8 border-4 border-nardo-gray-700 border-t-cyber-blue rounded-full animate-spin;
+  }
+
+  /* Flex center utility */
+  .flex-center {
+    @apply flex items-center justify-center;
+  }
+
+  /* Grid responsive for products */
+  .product-grid {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6;
+  }
+}
+
+/* ============================================
+   Animations
+   ============================================ */
+
+@keyframes slideInFromLeft {
+  from {
+    @apply translate-x-[-100%] opacity-0;
+  }
+  to {
+    @apply translate-x-0 opacity-100;
+  }
+}
+
+@keyframes slideInFromRight {
+  from {
+    @apply translate-x-[100%] opacity-0;
+  }
+  to {
+    @apply translate-x-0 opacity-100;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    @apply opacity-0;
+  }
+  to {
+    @apply opacity-100;
+  }
+}
+
+.animate-slide-in-left {
+  animation: slideInFromLeft 0.3s ease-out;
+}
+
+.animate-slide-in-right {
+  animation: slideInFromRight 0.3s ease-out;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}

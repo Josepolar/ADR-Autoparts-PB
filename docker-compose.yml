@@ -1,0 +1,46 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: adr-autoparts-db
+    environment:
+      POSTGRES_USER: adr_user
+      POSTGRES_PASSWORD: adr_dev_password_123
+      POSTGRES_DB: adr_autoparts
+    ports:
+      - "5432:5432"
+    volumes:
+      - adr-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U adr_user -d adr_autoparts"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - adr-network
+
+  # Optional: pgAdmin for visual DB management
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: adr-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@adr-autoparts.local
+      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    networks:
+      - adr-network
+    profiles:
+      - debug # Run with: docker-compose --profile debug up
+
+volumes:
+  adr-postgres-data:
+    driver: local
+
+networks:
+  adr-network:
+    driver: bridge
