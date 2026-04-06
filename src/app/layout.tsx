@@ -21,11 +21,11 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <head>
-        <meta charset="utf-8" />
+        <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content="#00d4ff" />
       </head>
-      <body className="bg-nardo-gray-900 text-text-primary">
+      <body className="bg-nardo-gray-900 text-nardo-gray-100">
         {children}
       </body>
     </html>

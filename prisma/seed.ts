@@ -29,7 +29,7 @@ async function main() {
     await db.partVariant.deleteMany({});
     await db.part.deleteMany({});
     await db.firmwareFile.deleteMany({});
-    await db.ecu.deleteMany({});
+    await (db as any).eCU.deleteMany({});
     await db.vehicle.deleteMany({});
     await db.user.deleteMany({});
 
