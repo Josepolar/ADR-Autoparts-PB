@@ -13,4 +13,5 @@ const config = {
   },
 };
 
-export default createJestConfig(config) as any;
+const jestConfig: any = createJestConfig(config);
+export default jestConfig
