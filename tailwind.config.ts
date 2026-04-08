@@ -13,16 +13,16 @@ const config: Config = {
       colors: {
         // Neo-Industrial Dark Mode color palette
         "cyber-blue": {
-          50: "#f0fafb",
-          100: "#e1f5f7",
-          200: "#b3e5fc",
-          300: "#81d4fa",
-          400: "#4fc3f7",
-          500: "#00d4ff", // Primary - Cyber Blue
-          600: "#00b8d4",
-          700: "#0097a7",
-          800: "#00798a",
-          900: "#006064",
+          50: "#ffe0e0",
+          100: "#ffcccc",
+          200: "#ff9999",
+          300: "#ff6666",
+          400: "#ff3333",
+          500: "#ff0000", // Primary - Vibrant Red
+          600: "#dd0000",
+          700: "#bb0000",
+          800: "#990000",
+          900: "#660000",
         },
         "nardo-gray": {
           50: "#f8f8f9",
@@ -50,7 +50,7 @@ const config: Config = {
         },
       },
       fontFamily: {
-        sans: ["Inter", ...defaultTheme.fontFamily.sans],
+        sans: ["'Bebas Neue'", "'Squada One'", "sans-serif"],
         mono: ["Fira Code", ...defaultTheme.fontFamily.mono],
       },
       backgroundColor: {
@@ -67,7 +67,7 @@ const config: Config = {
         "muted": "#6d6e71",
       },
       boxShadow: {
-        "glow-blue": "0 0 20px rgba(0, 212, 255, 0.3)",
+        "glow-blue": "0 0 20px rgba(255, 0, 0, 0.4)",
         "glow-amber": "0 0 20px rgba(255, 180, 0, 0.3)",
       },
       animation: {

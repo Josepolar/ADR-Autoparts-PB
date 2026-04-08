@@ -7,7 +7,7 @@
    ============================================ */
 
 :root {
-  --color-cyber-blue: #00d4ff;
+  --color-cyber-blue: #ff0000;
   --color-nardo-gray: #6d6e71;
   --color-vivid-amber: #ffb400;
   --color-surface-dark: #111111;
@@ -24,7 +24,9 @@
   }
 
   body {
-    @apply bg-nardo-gray-900 text-nardo-gray-100;
+    @apply bg-nardo-gray-900 text-nardo-gray-100 font-sans;
+    font-weight: 700;
+    letter-spacing: 0.5px;
   }
 
   a {
@@ -50,9 +52,9 @@
 }
 
 @layer components {
-  /* Primary Button - Cyber Blue CTA */
+  /* Primary Button - Red CTA */
   .btn-primary {
-    @apply inline-flex items-center justify-center px-4 py-2 bg-cyber-blue-500 text-nardo-gray-900 font-semibold rounded-lg hover:bg-cyber-blue-400 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-250 shadow-lg hover:shadow-xl;
+    @apply inline-flex items-center justify-center px-4 py-2 bg-cyber-blue-500 text-white font-bold rounded-lg hover:bg-cyber-blue-600 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-250 shadow-lg hover:shadow-glow-blue uppercase tracking-widest;
   }
 
   /* Secondary Button - Nardo Gray */
@@ -72,7 +74,7 @@
 
   /* Input field */
   .input {
-    @apply w-full px-4 py-2 bg-nardo-gray-800 border border-nardo-gray-700 rounded-lg text-nardo-gray-100 placeholder-nardo-gray-400 focus:outline-none focus:border-cyber-blue-500 focus:ring-2 focus:ring-cyber-blue-500 focus:ring-opacity-50 transition-all duration-250;
+    @apply w-full px-4 py-2 bg-nardo-gray-800 border border-nardo-gray-700 rounded-lg text-nardo-gray-100 placeholder-nardo-gray-400 focus:outline-none focus:border-cyber-blue-500 focus:ring-2 focus:ring-cyber-blue-500 focus:ring-opacity-50 transition-all duration-250 font-bold;
   }
 
   /* Badge */
@@ -93,7 +95,7 @@
   }
 
   .badge-info {
-    @apply bg-cyber-blue-900 text-cyber-blue-200;
+    @apply bg-cyber-blue-900 text-cyber-blue-100;
   }
 
   /* Section heading */
