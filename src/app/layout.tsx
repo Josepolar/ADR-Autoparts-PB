@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { CartProvider } from "@/context/cart-context";
 
 export const metadata: Metadata = {
   title: "ADR Autoparts - Firmware, Parts & Services",
@@ -28,7 +29,9 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Squada+One&display=swap" rel="stylesheet" />
       </head>
       <body className="bg-nardo-gray-900 text-nardo-gray-100">
-        {children}
+        <CartProvider>
+          {children}
+        </CartProvider>
       </body>
     </html>
   );

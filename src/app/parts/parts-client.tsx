@@ -5,6 +5,7 @@ import { getParts } from "@/server/actions";
 import { Card, Button, Badge, Spinner, SearchBar } from "@/components/ui/modern-components";
 import { ShoppingCart, Filter } from "lucide-react";
 import Link from "next/link";
+import { useCart } from "@/context/cart-context";
 
 interface Part {
   id: string;
@@ -24,6 +25,8 @@ export default function PartsClient() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
+  const { addItem, itemCount } = useCart();
+  const [addedItem, setAddedItem] = useState<string | null>(null);
 
   useEffect(() => {
     loadParts();
@@ -39,6 +42,18 @@ export default function PartsClient() {
       setParts(result.data || []);
     }
     setLoading(false);
+  }
+
+  function handleAddToCart(part: Part) {
+    addItem({
+      partId: part.id,
+      name: part.name,
+      sku: part.sku,
+      price: parseFloat(String(part.retailPrice)),
+      quantity: 1,
+    });
+    setAddedItem(part.id);
+    setTimeout(() => setAddedItem(null), 2000);
   }
 
   const categories = [
@@ -59,12 +74,16 @@ export default function PartsClient() {
               ← Back to Home
             </Link>
             <div className="flex gap-4">
-              <button className="relative p-2 text-nardo-gray-100 hover:text-cyber-blue-500 transition">
-                <ShoppingCart className="w-6 h-6" />
-                <span className="absolute -top-1 -right-1 bg-cyber-blue-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                  0
-                </span>
-              </button>
+              <Link href="/cart">
+                <button className="relative p-2 text-nardo-gray-100 hover:text-cyber-blue-500 transition">
+                  <ShoppingCart className="w-6 h-6" />
+                  {itemCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-cyber-blue-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                      {itemCount}
+                    </span>
+                  )}
+                </button>
+              </Link>
               <Link href="/auth/signin">
                 <Button variant="secondary" size="sm">
                   Sign In
@@ -149,10 +168,10 @@ export default function PartsClient() {
                   variant={part.totalStock > 0 ? "primary" : "secondary"}
                   size="md"
                   disabled={part.totalStock === 0}
-                  icon={ShoppingCart}
-                  className="w-full"
+                  onClick={() => handleAddToCart(part)}
+                  className={`w-full transition ${addedItem === part.id ? "bg-green-600" : ""}`}
                 >
-                  Add to Cart
+                  {addedItem === part.id ? "✓ Added to Cart" : "Add to Cart"}
                 </Button>
               </Card>
             ))}
