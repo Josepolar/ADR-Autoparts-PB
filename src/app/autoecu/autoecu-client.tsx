@@ -60,7 +60,7 @@ export default function AutoECUClient() {
             <div className="flex gap-4">
               <Link href="/autoecu/upload">
                 <Button variant="primary" size="sm">
-                  <Upload className="w-4 h-4" /> Upload ECU
+                  Upload ECU
                 </Button>
               </Link>
               <Link href="/auth/signin">
