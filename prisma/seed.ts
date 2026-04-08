@@ -120,7 +120,7 @@ async function main() {
       },
     });
 
-    const ecu1 = await db.ecu.create({
+    const ecu1 = await (db as any).eCU.create({
       data: {
         vehicleId: vehicle1.id,
         ecu_type: "ENGINE_ECU",
@@ -130,7 +130,7 @@ async function main() {
       },
     });
 
-    const ecu2 = await db.ecu.create({
+    const ecu2 = await (db as any).eCU.create({
       data: {
         vehicleId: vehicle2.id,
         ecu_type: "TRANSMISSION_TCU",

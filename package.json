@@ -57,6 +57,7 @@
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
     "prisma": "^5.7.1",
+    "supabase": "^2.87.2",
     "tsx": "^4.21.0",
     "typescript": "^5.3.3"
   }
