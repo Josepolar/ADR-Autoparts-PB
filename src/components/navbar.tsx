@@ -1,9 +1,8 @@
 "use client";
 
 import { useAuth } from "@/context/auth-context";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Menu, X, User, LogOut } from "lucide-react";
+import { Menu, X, User } from "lucide-react";
 import { useState } from "react";
 import LogoutButton from "@/components/auth/logout-button";
 
@@ -13,7 +12,6 @@ import LogoutButton from "@/components/auth/logout-button";
  */
 export function Navbar() {
   const { userRole, userEmail, isAuthenticated } = useAuth();
-  const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
