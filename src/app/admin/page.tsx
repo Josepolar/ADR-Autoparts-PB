@@ -22,6 +22,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import Link from "next/link";
+import LogoutButton from "@/components/auth/logout-button";
 import InventoryManagement from "@/components/admin/inventory-management";
 
 interface Stats {
@@ -86,11 +87,7 @@ export default function AdminDashboard() {
             <Link href="/" className="text-white font-bold text-xl">
               ADR Admin
             </Link>
-            <Link href="/auth/signin">
-              <Button variant="secondary" size="sm">
-                Logout
-              </Button>
-            </Link>
+            <LogoutButton variant="secondary" size="sm" />
           </div>
         </div>
       </nav>

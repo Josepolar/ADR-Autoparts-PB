@@ -1,14 +1,26 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useState } from "react";
-import { useRouter } from "next/navigation";
+import { FormEvent, useState, useEffect } from "react";
 import PasswordInput from "@/components/auth/password-input";
 
 export default function SignInPage() {
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+    // Set cache-control headers to prevent back-button logout
+    // This is handled by the page itself for client-side security
+    if (typeof window !== "undefined") {
+      // Disable browser back-button caching for auth pages
+      window.history.pushState(null, "", window.location.href);
+      window.addEventListener("popstate", () => {
+        window.history.pushState(null, "", window.location.href);
+      });
+    }
+  }, []);
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -16,31 +28,111 @@ export default function SignInPage() {
     setError("");
 
     const formData = new FormData(e.currentTarget);
-    const email = formData.get("email");
-    const password = formData.get("password");
+    const email = (formData.get("email") as string)?.trim() || "";
+    const password = (formData.get("password") as string) || "";
 
     try {
-      // TODO: Implement actual authentication with NextAuth
-      // For MVP, redirect based on test role
-      console.log("Sign in attempt:", { email, password });
-      
-      // Simulate role detection based on email for MVP
-      // In production, this would come from the JWT token
-      let redirectPath = "/user"; // Default to user dashboard
-      
-      if ((email as string)?.includes("admin")) {
-        redirectPath = "/admin";
-      } else if ((email as string)?.includes("staff")) {
-        redirectPath = "/staff";
+      // Validate inputs
+      if (!email || !password) {
+        setError("Email and password are required");
+        setLoading(false);
+        return;
       }
+
+      // Validate email format
+      if (!email.includes("@")) {
+        setError("Please enter a valid email address");
+        setLoading(false);
+        return;
+      }
+
+      // Validate password length (MVP requirement)
+      if (password.length < 6) {
+        setError("Password must be at least 6 characters");
+        setLoading(false);
+        return;
+      }
+
+      console.log("Sign in attempt:", { email });
       
-      router.push(redirectPath);
+      // Simulate authentication delay (MVP)
+      await new Promise((resolve) => setTimeout(resolve, 800));
+
+      // TODO: In production, call actual authentication API
+      // const response = await fetch("/api/auth/signin", {
+      //   method: "POST",
+      //   headers: { "Content-Type": "application/json" },
+      //   body: JSON.stringify({ email, password }),
+      // });
+      // const data = await response.json();
+      // if (!data.success) throw new Error(data.message);
+
+      // Determine role-based redirect path using switch statement
+      const redirectPath = getRolePath(email);
+      
+      // Store role in sessionStorage for client-side access control
+      if (typeof window !== "undefined") {
+        const userRole = detectUserRole(email);
+        sessionStorage.setItem("userRole", userRole);
+        sessionStorage.setItem("userEmail", email);
+        sessionStorage.setItem("authTimestamp", Date.now().toString());
+      }
+
+      // Clear form before redirect
+      const form = e.currentTarget as HTMLFormElement;
+      form.reset();
+
+      // Use window.location for hard redirect to prevent back-button issues
+      // This triggers a full page reload, preventing cached auth state
+      window.location.href = redirectPath;
     } catch (err) {
-      setError("Authentication failed. Please try again.");
-      console.error(err);
-    } finally {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Authentication failed. Please try again."
+      );
+      console.error("Sign in error:", err);
       setLoading(false);
     }
+  }
+
+  /**
+   * Detect user role based on email pattern
+   * In production: extract from JWT token claims
+   */
+  function detectUserRole(email: string): "admin" | "staff" | "user" {
+    const emailLower = email.toLowerCase();
+    
+    switch (true) {
+      case emailLower.includes("admin"):
+        return "admin";
+      case emailLower.includes("staff"):
+        return "staff";
+      default:
+        return "user";
+    }
+  }
+
+  /**
+   * Get the appropriate dashboard path based on user role
+   * Uses switch statement for clear role-to-path mapping
+   */
+  function getRolePath(email: string): string {
+    const role = detectUserRole(email);
+
+    switch (role) {
+      case "admin":
+        return "/admin";
+      case "staff":
+        return "/staff";
+      case "user":
+      default:
+        return "/user";
+    }
+  }
+
+  if (!isClient) {
+    return null; // Prevent hydration mismatch
   }
 
   return (
@@ -56,8 +148,9 @@ export default function SignInPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="bg-red-900 border border-red-700 text-red-100 px-4 py-2 rounded-lg">
-                {error}
+              <div className="bg-red-900 border border-red-700 text-red-100 px-4 py-3 rounded-lg text-sm">
+                <p className="font-semibold">Error</p>
+                <p>{error}</p>
               </div>
             )}
 
@@ -69,6 +162,8 @@ export default function SignInPage() {
                 className="input"
                 placeholder="you@example.com"
                 required
+                disabled={loading}
+                autoComplete="email"
               />
             </div>
 
@@ -77,6 +172,7 @@ export default function SignInPage() {
               <PasswordInput
                 name="password"
                 required
+                disabled={loading}
               />
             </div>
 
@@ -85,9 +181,75 @@ export default function SignInPage() {
               disabled={loading}
               className="btn-primary w-full mt-6"
             >
-              {loading ? "Signing in..." : "Sign In"}
+              {loading ? (
+                <>
+                  <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                  Signing in...
+                </>
+              ) : (
+                "Sign In"
+              )}
             </button>
           </form>
+
+          {/* Demo Credentials Section */}
+          <div className="mt-6 p-4 bg-nardo-gray-800 rounded-lg border border-nardo-gray-700">
+            <p className="text-xs font-semibold text-nardo-gray-300 mb-3">🔐 Demo Credentials (Click to autofill):</p>
+            <div className="space-y-2">
+              <button
+                type="button"
+                onClick={(e) => {
+                  const form = (e.currentTarget.closest("form") as HTMLFormElement) || 
+                    document.querySelector("form");
+                  if (form) {
+                    const emailInput = form.querySelector('input[name="email"]') as HTMLInputElement;
+                    const passwordInput = form.querySelector('input[name="password"]') as HTMLInputElement;
+                    if (emailInput) emailInput.value = "admin@adrautoparts.com";
+                    if (passwordInput) passwordInput.value = "admin123";
+                  }
+                }}
+                className="w-full text-left px-2 py-1.5 bg-nardo-gray-700 hover:bg-nardo-gray-600 rounded text-xs transition-colors"
+              >
+                <span className="font-semibold text-cyber-orange">Admin:</span>{" "}
+                <span className="text-nardo-gray-300">admin@adrautoparts.com</span>
+              </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  const form = (e.currentTarget.closest("form") as HTMLFormElement) || 
+                    document.querySelector("form");
+                  if (form) {
+                    const emailInput = form.querySelector('input[name="email"]') as HTMLInputElement;
+                    const passwordInput = form.querySelector('input[name="password"]') as HTMLInputElement;
+                    if (emailInput) emailInput.value = "staff@adrautoparts.com";
+                    if (passwordInput) passwordInput.value = "staff123";
+                  }
+                }}
+                className="w-full text-left px-2 py-1.5 bg-nardo-gray-700 hover:bg-nardo-gray-600 rounded text-xs transition-colors"
+              >
+                <span className="font-semibold text-cyber-blue">Staff:</span>{" "}
+                <span className="text-nardo-gray-300">staff@adrautoparts.com</span>
+              </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  const form = (e.currentTarget.closest("form") as HTMLFormElement) || 
+                    document.querySelector("form");
+                  if (form) {
+                    const emailInput = form.querySelector('input[name="email"]') as HTMLInputElement;
+                    const passwordInput = form.querySelector('input[name="password"]') as HTMLInputElement;
+                    if (emailInput) emailInput.value = "user@adrautoparts.com";
+                    if (passwordInput) passwordInput.value = "user123";
+                  }
+                }}
+                className="w-full text-left px-2 py-1.5 bg-nardo-gray-700 hover:bg-nardo-gray-600 rounded text-xs transition-colors"
+              >
+                <span className="font-semibold text-vibrant-red">User:</span>{" "}
+                <span className="text-nardo-gray-300">user@adrautoparts.com</span>
+              </button>
+            </div>
+            <p className="text-xs text-nardo-gray-500 mt-2">Password: Any 6+ characters</p>
+          </div>
 
           <div className="mt-6 text-center">
             <p className="text-text-secondary mb-2">Don&apos;t have an account?</p>

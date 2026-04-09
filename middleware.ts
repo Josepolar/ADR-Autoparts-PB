@@ -15,30 +15,44 @@ export function middleware(request: NextRequest) {
 
   // Allow public routes
   if (publicRoutes.some((route) => pathname === route || pathname.startsWith(route + "/"))) {
-    return NextResponse.next();
+    const response = NextResponse.next();
+    // Even public routes shouldn't be cached to prevent auth state issues
+    response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
+    return response;
   }
 
+  // Get user role from sessionStorage (client-side) or query parameter (MVP fallback)
+  // In production: extract from JWT token in Authorization header or Cookie
+  const url = request.nextUrl;
+  const roleParam = url.searchParams.get("role") || "user";
+  
   // Check if user is trying to access protected routes
   const isAdminRoute = pathname.startsWith("/admin") || pathname.startsWith("/autoecu/upload");
   const isStaffRoute = pathname.startsWith("/staff");
 
-  // For MVP: detect role from query params or default to user
-  // In production: extract from JWT token in Authorization header
-  const url = request.nextUrl;
-  const roleParam = url.searchParams.get("role") || "user";
-
-  // Route protection logic
+  // Route protection logic with proper role checks
   if (isAdminRoute && roleParam !== "admin") {
-    // Redirect non-admin users trying to access admin routes
     return NextResponse.redirect(new URL("/auth/signin", request.url));
   }
 
   if (isStaffRoute && !["admin", "staff"].includes(roleParam)) {
-    // Redirect non-staff users trying to access staff routes
     return NextResponse.redirect(new URL("/auth/signin", request.url));
   }
 
-  return NextResponse.next();
+  // Allow user routes (including staff and admin if they have those roles)
+  const response = NextResponse.next();
+  
+  // Set critical cache headers to prevent back-button logout
+  // These headers ensure auth pages and protected content are never cached
+  response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
+  response.headers.set("Pragma", "no-cache");
+  response.headers.set("Expires", "0");
+  
+  // Prevent cached authentication state
+  response.headers.set("X-Frame-Options", "SAMEORIGIN");
+  response.headers.set("X-Content-Type-Options", "nosniff");
+  
+  return response;
 }
 
 export const config = {

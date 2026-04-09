@@ -13,9 +13,9 @@ import {
   Package,
   Calendar,
   Settings,
-  LogOut,
 } from "lucide-react";
 import Link from "next/link";
+import LogoutButton from "@/components/auth/logout-button";
 
 export default function UserDashboard() {
   const [orders, setOrders] = useState<any[]>([]);
@@ -57,12 +57,7 @@ export default function UserDashboard() {
               <Button variant="ghost" size="sm">
                 <Settings className="w-5 h-5" />
               </Button>
-              <Link href="/auth/signin">
-                <Button variant="secondary" size="sm">
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Logout
-                </Button>
-              </Link>
+              <LogoutButton variant="secondary" size="sm" />
             </div>
           </div>
         </div>

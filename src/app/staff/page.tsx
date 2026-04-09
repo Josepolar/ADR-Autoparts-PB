@@ -14,6 +14,7 @@ import {
   Phone,
 } from "lucide-react";
 import Link from "next/link";
+import LogoutButton from "@/components/auth/logout-button";
 
 export default function StaffDashboard() {
   const [orders, setOrders] = useState<any[]>([]);
@@ -53,11 +54,7 @@ export default function StaffDashboard() {
             <Link href="/" className="text-white font-bold text-xl">
               ADR Staff Portal
             </Link>
-            <Link href="/auth/signin">
-              <Button variant="secondary" size="sm">
-                Logout
-              </Button>
-            </Link>
+            <LogoutButton variant="secondary" size="sm" />
           </div>
         </div>
       </nav>

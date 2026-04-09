@@ -11,6 +11,7 @@ interface PasswordInputProps {
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   value?: string;
   className?: string;
+  disabled?: boolean;
 }
 
 export default function PasswordInput({
@@ -21,6 +22,7 @@ export default function PasswordInput({
   onChange,
   value,
   className = "",
+  disabled = false,
 }: PasswordInputProps) {
   const [showPassword, setShowPassword] = useState(false);
 
@@ -34,12 +36,14 @@ export default function PasswordInput({
         required={required}
         onChange={onChange}
         value={value}
+        disabled={disabled}
         className={`input pr-10 ${className}`}
       />
       <button
         type="button"
         onClick={() => setShowPassword(!showPassword)}
-        className="absolute right-3 top-1/2 -translate-y-1/2 text-nardo-gray-400 hover:text-nardo-gray-300 transition-colors"
+        disabled={disabled}
+        className="absolute right-3 top-1/2 -translate-y-1/2 text-nardo-gray-400 hover:text-nardo-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         aria-label={showPassword ? "Hide password" : "Show password"}
       >
         {showPassword ? (
