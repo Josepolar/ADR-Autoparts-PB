@@ -40,3 +40,5 @@ lerna-debug.log*
 # Misc
 .cache/
 .turbo/
+.vercel
+.env*.local

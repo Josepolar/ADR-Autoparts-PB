@@ -76,15 +76,22 @@ export default function SignInPage() {
         sessionStorage.setItem("userRole", userRole);
         sessionStorage.setItem("userEmail", email);
         sessionStorage.setItem("authTimestamp", Date.now().toString());
+
+        // Clear form before redirect (safely handle null)
+        try {
+          const form = e.currentTarget as HTMLFormElement;
+          if (form) {
+            form.reset();
+          }
+        } catch (err) {
+          // Ignore form reset errors - we're redirecting anyway
+          console.debug("Form reset skipped:", err);
+        }
+
+        // Use window.location for hard redirect to prevent back-button issues
+        // This triggers a full page reload, preventing cached auth state
+        window.location.href = redirectPath;
       }
-
-      // Clear form before redirect
-      const form = e.currentTarget as HTMLFormElement;
-      form.reset();
-
-      // Use window.location for hard redirect to prevent back-button issues
-      // This triggers a full page reload, preventing cached auth state
-      window.location.href = redirectPath;
     } catch (err) {
       setError(
         err instanceof Error
