@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { CartProvider } from "@/context/cart-context";
 import { AuthProvider } from "@/context/auth-context";
+import { Navbar } from "@/components/navbar";
 
 export const metadata: Metadata = {
   title: "ADR Autoparts - Firmware, Parts & Services",
@@ -39,6 +40,7 @@ export default function RootLayout({
       </head>
       <body className="bg-nardo-gray-900 text-nardo-gray-100">
         <AuthProvider>
+          <Navbar />
           <CartProvider>
             {children}
           </CartProvider>

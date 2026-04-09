@@ -16,10 +16,17 @@ export default function SignUpPage() {
     setError("");
 
     const formData = new FormData(e.currentTarget);
-    const name = formData.get("name");
-    const email = formData.get("email");
-    const password = formData.get("password");
-    const confirmPassword = formData.get("confirmPassword");
+    const name = formData.get("name") as string;
+    const email = (formData.get("email") as string)?.toLowerCase().trim() || "";
+    const password = formData.get("password") as string;
+    const confirmPassword = formData.get("confirmPassword") as string;
+
+    // Validation
+    if (!name || !email || !password || !confirmPassword) {
+      setError("All fields are required");
+      setLoading(false);
+      return;
+    }
 
     if (password !== confirmPassword) {
       setError("Passwords do not match");
@@ -27,21 +34,60 @@ export default function SignUpPage() {
       return;
     }
 
-    if ((password as string).length < 8) {
+    if (password.length < 8) {
       setError("Password must be at least 8 characters");
       setLoading(false);
       return;
     }
 
+    if (!email.includes("@")) {
+      setError("Please enter a valid email address");
+      setLoading(false);
+      return;
+    }
+
     try {
-      // TODO: Implement actual user registration with NextAuth
-      console.log("Sign up attempt:", { name, email, password });
-      // For now, redirect to signin
-      router.push("/auth/signin");
+      // Call signup API to create user and set cookies
+      const response = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.message || "Registration failed");
+        setLoading(false);
+        return;
+      }
+
+      // User created and cookies set by API
+      // Store in sessionStorage for client-side access
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem("userRole", "user");
+        sessionStorage.setItem("userEmail", email);
+        sessionStorage.setItem("authTimestamp", Date.now().toString());
+      }
+
+      // Clear form
+      try {
+        const form = e.currentTarget as HTMLFormElement;
+        if (form) {
+          form.reset();
+        }
+      } catch (err) {
+        console.debug("Form reset skipped:", err);
+      }
+
+      // Auto-login: Redirect to landing page
+      // User is now logged in via cookies and sessionStorage
+      window.location.href = "/";
     } catch (err) {
-      setError("Registration failed. Please try again.");
-      console.error(err);
-    } finally {
+      setError(
+        err instanceof Error ? err.message : "Registration failed. Please try again."
+      );
+      console.error("Sign up error:", err);
       setLoading(false);
     }
   }
