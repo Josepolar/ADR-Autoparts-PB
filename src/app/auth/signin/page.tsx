@@ -69,10 +69,28 @@ export default function SignInPage() {
 
       // Determine role-based redirect path using switch statement
       const redirectPath = getRolePath(email);
+      const userRole = detectUserRole(email);
+
+      // Call API to set session cookies (server-side)
+      try {
+        const response = await fetch("/api/auth/signin", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, role: userRole }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to set session cookies");
+        }
+      } catch (apiError) {
+        console.error("Session cookie error:", apiError);
+        setError("Failed to establish session");
+        setLoading(false);
+        return;
+      }
       
       // Store role in sessionStorage for client-side access control
       if (typeof window !== "undefined") {
-        const userRole = detectUserRole(email);
         sessionStorage.setItem("userRole", userRole);
         sessionStorage.setItem("userEmail", email);
         sessionStorage.setItem("authTimestamp", Date.now().toString());

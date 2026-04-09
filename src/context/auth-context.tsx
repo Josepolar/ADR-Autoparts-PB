@@ -38,14 +38,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       setIsLoading(true);
 
-      // Call logout API to clear server-side session
-      const response = await fetch("/api/auth/session", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Cache-Control": "no-cache",
-        },
-      });
+      // Call logout API endpoints to clear both server and client sessions
+      try {
+        // Clear session API (old endpoint)
+        await fetch("/api/auth/session", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+        }).catch(() => {
+          // Ignore errors, we'll clear cookies via the new endpoint
+        });
+
+        // Clear signin cookies (new endpoint)
+        await fetch("/api/auth/signin", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+        }).catch(() => {
+          // Ignore errors, continue with client-side cleanup
+        });
+      } catch (apiError) {
+        console.error("API logout error:", apiError);
+      }
 
       // Clear client-side session storage
       if (typeof window !== "undefined") {
@@ -61,15 +73,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Disable back button navigation by replacing history
         window.history.replaceState({ logout: true }, "", "/");
 
-        // Prevent caching of the current page
-        if (response.ok) {
-          // Hard redirect to signin page
-          window.location.href = "/auth/signin";
-          // Add additional security measure: reload page from server
-          setTimeout(() => {
-            window.location.reload();
-          }, 100);
-        }
+        // Hard redirect to signin page
+        window.location.href = "/auth/signin";
+        
+        // Add additional security measure: reload page from server
+        setTimeout(() => {
+          window.location.reload();
+        }, 100);
       }
 
       setUserRole(null);

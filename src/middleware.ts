@@ -28,8 +28,8 @@ export function middleware(request: NextRequest) {
 
   // Handle protected routes
   if (isProtectedRoute && !sessionToken && !authToken) {
-    // User is not authenticated, redirect to login
-    return NextResponse.redirect(new URL("/login", request.url), {
+    // User is not authenticated, redirect to signin
+    return NextResponse.redirect(new URL("/auth/signin", request.url), {
       status: 307,
     });
   }
