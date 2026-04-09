@@ -22,6 +22,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import Link from "next/link";
+import InventoryManagement from "@/components/admin/inventory-management";
 
 interface Stats {
   totalUsers: number;
@@ -292,14 +293,9 @@ export default function AdminDashboard() {
               </div>
             )}
           </Card>
-        ) : (
-          <Card>
-            <h2 className="text-2xl font-bold text-white mb-6">Inventory Management</h2>
-            <p className="text-nardo-gray-400">
-              Inventory management coming soon. Track stock levels and update quantities.
-            </p>
-          </Card>
-        )}
+        ) : activeTab === "inventory" ? (
+          <InventoryManagement />
+        ) : null}
       </section>
     </main>
   );

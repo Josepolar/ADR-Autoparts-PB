@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import PasswordInput from "@/components/auth/password-input";
 
 export default function SignInPage() {
   const router = useRouter();
@@ -62,11 +63,8 @@ export default function SignInPage() {
 
             <div>
               <label className="block text-sm font-medium mb-2">Password</label>
-              <input
-                type="password"
+              <PasswordInput
                 name="password"
-                className="input"
-                placeholder="••••••••"
                 required
               />
             </div>
