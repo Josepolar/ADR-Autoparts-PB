@@ -39,14 +39,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create new user with "User" role (default for security)
+    // Create new user with "CUSTOMER" role (default for security)
     // In production, hash the password with bcrypt
     const newUser = await prisma.user.create({
       data: {
         name,
         email,
-        password, // TODO: Hash with bcrypt in production
-        role: "user", // Always default to "user" for new signups - SECURITY CRITICAL
+        passwordHash: password, // TODO: Hash with bcrypt in production
+        role: "CUSTOMER", // Always default to "CUSTOMER" for new signups - SECURITY CRITICAL
       },
     });
 
@@ -69,6 +69,7 @@ export async function POST(request: NextRequest) {
       path: "/",
     });
 
+    // authToken uses "user" for CUSTOMER role (internal mapping)
     response.cookies.set("authToken", "user", {
       httpOnly: false,
       secure: false,

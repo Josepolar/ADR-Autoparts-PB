@@ -123,18 +123,18 @@ export default function SignInPage() {
 
   /**
    * Detect user role based on email pattern
-   * In production: extract from JWT token claims
+   * Production: Extract from verified JWT token claims
    */
   function detectUserRole(email: string): "admin" | "staff" | "user" {
     const emailLower = email.toLowerCase();
     
     switch (true) {
       case emailLower.includes("admin"):
-        return "admin";
-      case emailLower.includes("staff"):
-        return "staff";
+        return "admin"; // Maps to ADMIN role
+      case emailLower.includes("staff") || emailLower.includes("mechanic"):
+        return "staff"; // Maps to MECHANIC role
       default:
-        return "user";
+        return "user"; // Maps to CUSTOMER role
     }
   }
 

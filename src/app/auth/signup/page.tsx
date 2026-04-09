@@ -65,6 +65,7 @@ export default function SignUpPage() {
       // User created and cookies set by API
       // Store in sessionStorage for client-side access
       if (typeof window !== "undefined") {
+        // New users are always CUSTOMER role, which maps to "user" internally
         sessionStorage.setItem("userRole", "user");
         sessionStorage.setItem("userEmail", email);
         sessionStorage.setItem("authTimestamp", Date.now().toString());
