@@ -21,9 +21,20 @@ export default function SignInPage() {
 
     try {
       // TODO: Implement actual authentication with NextAuth
+      // For MVP, redirect based on test role
       console.log("Sign in attempt:", { email, password });
-      // For now, just redirect to dashboard
-      router.push("/admin");
+      
+      // Simulate role detection based on email for MVP
+      // In production, this would come from the JWT token
+      let redirectPath = "/user"; // Default to user dashboard
+      
+      if ((email as string)?.includes("admin")) {
+        redirectPath = "/admin";
+      } else if ((email as string)?.includes("staff")) {
+        redirectPath = "/staff";
+      }
+      
+      router.push(redirectPath);
     } catch (err) {
       setError("Authentication failed. Please try again.");
       console.error(err);

@@ -3,6 +3,11 @@ import { db } from "@/server/db";
 
 export async function POST(request: NextRequest) {
   try {
+    // In production, verify user is authenticated and has appropriate role
+    // For MVP, allow authenticated users to upload
+    // In production: const userId = extractFromJWT(request);
+    const userId = "test-user-1";
+
     const formData = await request.formData();
     const file = formData.get("file") as File;
     const vehicleId = formData.get("vehicleId") as string;
@@ -14,9 +19,6 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-
-    // For now, use a test user ID (in production, get from session)
-    const userId = "test-user-1";
 
     // Verify user exists
     const user = await db.user.findUnique({
