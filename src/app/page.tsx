@@ -1,4 +1,5 @@
 import Link from "next/link";
+import AuthCTA from "@/components/auth-cta";
 
 export default function Home() {
   return (
@@ -87,16 +88,7 @@ export default function Home() {
 
       {/* CTA Section */}
       <section className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-        <div className="bg-gradient-to-r from-cyber-blue-900 to-nardo-gray-800 border border-cyber-blue-700 rounded-lg p-12 text-center">
-          <h2 className="text-3xl font-bold mb-4">Ready to Get Started?</h2>
-          <p className="text-text-secondary mb-8">
-            Create an account to access all three modules and manage your vehicles,
-            orders, and appointments in one place.
-          </p>
-          <Link href="/auth/signup" className="btn-primary">
-            Create Account
-          </Link>
-        </div>
+        <AuthCTA />
       </section>
 
       {/* Footer */}

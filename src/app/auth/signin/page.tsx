@@ -140,19 +140,19 @@ export default function SignInPage() {
 
   /**
    * Get the appropriate dashboard path based on user role
-   * Uses switch statement for clear role-to-path mapping
+   * Redirects to role-specific dashboard after successful login
    */
   function getRolePath(email: string): string {
     const role = detectUserRole(email);
 
     switch (role) {
       case "admin":
-        return "/admin";
+        return "/admin"; // Admin dashboard
       case "staff":
-        return "/staff";
+        return "/staff"; // Staff portal
       case "user":
       default:
-        return "/user";
+        return "/"; // Landing page for regular users
     }
   }
 
