@@ -4,15 +4,23 @@ import { useAuth } from "@/context/auth-context";
 import Link from "next/link";
 import { Menu, X, User } from "lucide-react";
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 import LogoutButton from "@/components/auth/logout-button";
 
 /**
  * Global navbar component with authentication awareness
  * Shows different navigation based on user role
+ * Hidden on /admin and /staff routes (they have their own navigation)
  */
 export function Navbar() {
   const { userRole, userEmail, isAuthenticated } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const pathname = usePathname();
+
+  // Hide global navbar on admin/staff pages (they use sidebar navigation)
+  if (pathname?.startsWith("/admin") || pathname?.startsWith("/staff")) {
+    return null;
+  }
 
   return (
     <nav className="bg-nardo-gray-800 border-b border-nardo-gray-700 sticky top-0 z-50">
