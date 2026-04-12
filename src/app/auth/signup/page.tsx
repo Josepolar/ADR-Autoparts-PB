@@ -92,59 +92,72 @@ export default function SignUpPage() {
   }
 
   return (
-    <main className="min-h-screen bg-nardo-gray-900 flex items-center justify-center px-4">
-      <div className="w-full max-w-md">
-        <div className="card">
+    <main className="min-h-screen bg-[#0f0f12] flex items-center justify-center px-4 py-12">
+      {/* Background effects */}
+      <div className="fixed inset-0 bg-gradient-to-br from-emerald-600/3 via-transparent to-blue-600/3 pointer-events-none" />
+
+      <div className="relative w-full max-w-md">
+        {/* Logo */}
+        <div className="text-center mb-8">
+          <Link href="/" className="inline-flex items-center gap-2">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center text-white font-bold text-lg">
+              A
+            </div>
+            <span className="text-white font-bold text-xl">ADR Autoparts</span>
+          </Link>
+        </div>
+
+        <div className="bg-[#16161d] border border-[#2a2a35] rounded-2xl p-8">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold mb-2">Create Account</h1>
-            <p className="text-text-secondary">
+            <h1 className="text-2xl font-bold text-white mb-2">Create Account</h1>
+            <p className="text-gray-500 text-sm">
               Join the ADR Autoparts community
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-5">
             {error && (
-              <div className="bg-red-900 border border-red-700 text-red-100 px-4 py-2 rounded-lg">
+              <div className="bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-xl text-sm">
                 {error}
               </div>
             )}
 
             <div>
-              <label className="block text-sm font-medium mb-2">Full Name</label>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Full Name</label>
               <input
                 type="text"
                 name="name"
-                className="input"
+                className="w-full px-4 py-3 bg-[#1e1e28] border border-[#2a2a35] rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-red-500/50 focus:ring-1 focus:ring-red-500/20 transition-all text-sm"
                 placeholder="John Doe"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Email</label>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Email</label>
               <input
                 type="email"
                 name="email"
-                className="input"
+                className="w-full px-4 py-3 bg-[#1e1e28] border border-[#2a2a35] rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-red-500/50 focus:ring-1 focus:ring-red-500/20 transition-all text-sm"
                 placeholder="you@example.com"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Password</label>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Password</label>
               <PasswordInput
                 name="password"
                 minLength={8}
                 required
               />
-              <p className="text-xs text-text-muted mt-1">
+              <p className="text-xs text-gray-600 mt-1.5">
                 Minimum 8 characters
               </p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">
+              <label className="block text-sm font-medium text-gray-300 mb-2">
                 Confirm Password
               </label>
               <PasswordInput
@@ -156,21 +169,20 @@ export default function SignUpPage() {
             <button
               type="submit"
               disabled={loading}
-              className="btn-primary w-full mt-6"
+              className="w-full py-3 bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold rounded-xl hover:from-red-600 hover:to-red-700 transition-all duration-200 shadow-lg shadow-red-500/20 disabled:opacity-50 disabled:cursor-not-allowed mt-2"
             >
               {loading ? "Creating Account..." : "Create Account"}
             </button>
           </form>
 
-          <div className="mt-6 text-center">
-            <p className="text-text-secondary mb-2">Already have an account?</p>
-            <Link href="/auth/signin" className="text-cyber-blue hover:text-cyber-blue-400 font-semibold">
-              Sign in here
-            </Link>
-          </div>
-
-          <div className="mt-6 text-center">
-            <Link href="/" className="text-text-secondary hover:text-text-primary">
+          <div className="mt-6 text-center space-y-3">
+            <p className="text-gray-500 text-sm">
+              Already have an account?{" "}
+              <Link href="/auth/signin" className="text-red-400 hover:text-red-300 font-medium transition-colors">
+                Sign in
+              </Link>
+            </p>
+            <Link href="/" className="block text-gray-600 hover:text-gray-400 text-sm transition-colors">
               ← Back to Home
             </Link>
           </div>

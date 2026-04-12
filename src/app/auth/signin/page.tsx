@@ -182,30 +182,42 @@ export default function SignInPage() {
   }
 
   return (
-    <main className="min-h-screen bg-nardo-gray-900 flex items-center justify-center px-4">
-      <div className="w-full max-w-md">
-        <div className="card">
+    <main className="min-h-screen bg-[#0f0f12] flex items-center justify-center px-4 py-12">
+      {/* Background effects */}
+      <div className="fixed inset-0 bg-gradient-to-br from-red-600/3 via-transparent to-blue-600/3 pointer-events-none" />
+
+      <div className="relative w-full max-w-md">
+        {/* Logo */}
+        <div className="text-center mb-8">
+          <Link href="/" className="inline-flex items-center gap-2">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center text-white font-bold text-lg">
+              A
+            </div>
+            <span className="text-white font-bold text-xl">ADR Autoparts</span>
+          </Link>
+        </div>
+
+        <div className="bg-[#16161d] border border-[#2a2a35] rounded-2xl p-8">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold mb-2">Sign In</h1>
-            <p className="text-text-secondary">
-              Welcome back to ADR Autoparts
+            <h1 className="text-2xl font-bold text-white mb-2">Welcome back</h1>
+            <p className="text-gray-500 text-sm">
+              Sign in to your ADR Autoparts account
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-5">
             {error && (
-              <div className="bg-red-900 border border-red-700 text-red-100 px-4 py-3 rounded-lg text-sm">
-                <p className="font-semibold">Error</p>
+              <div className="bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-xl text-sm">
                 <p>{error}</p>
               </div>
             )}
 
             <div>
-              <label className="block text-sm font-medium mb-2">Email</label>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Email</label>
               <input
                 type="email"
                 name="email"
-                className="input"
+                className="w-full px-4 py-3 bg-[#1e1e28] border border-[#2a2a35] rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-red-500/50 focus:ring-1 focus:ring-red-500/20 transition-all text-sm"
                 placeholder="you@example.com"
                 required
                 disabled={loading}
@@ -214,7 +226,7 @@ export default function SignInPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Password</label>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Password</label>
               <PasswordInput
                 name="password"
                 required
@@ -225,11 +237,11 @@ export default function SignInPage() {
             <button
               type="submit"
               disabled={loading}
-              className="btn-primary w-full mt-6"
+              className="w-full py-3 bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold rounded-xl hover:from-red-600 hover:to-red-700 transition-all duration-200 shadow-lg shadow-red-500/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {loading ? (
                 <>
-                  <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                  <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   Signing in...
                 </>
               ) : (
@@ -239,14 +251,16 @@ export default function SignInPage() {
           </form>
 
           {/* Demo Credentials Section */}
-          <div className="mt-6 p-4 bg-nardo-gray-800 rounded-lg border border-nardo-gray-700">
-            <p className="text-xs font-semibold text-nardo-gray-300 mb-3">🔐 Demo Credentials (Click to autofill):</p>
+          <div className="mt-6 p-4 bg-[#1e1e28] rounded-xl border border-[#2a2a35]">
+            <p className="text-xs font-medium text-gray-400 mb-3 flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 bg-amber-400 rounded-full" />
+              Demo Credentials (Click to autofill)
+            </p>
             <div className="space-y-2">
               <button
                 type="button"
                 onClick={(e) => {
-                  const form = (e.currentTarget.closest("form") as HTMLFormElement) || 
-                    document.querySelector("form");
+                  const form = (e.currentTarget.closest(".bg-\\[\\#16161d\\]") as HTMLElement)?.querySelector("form");
                   if (form) {
                     const emailInput = form.querySelector('input[name="email"]') as HTMLInputElement;
                     const passwordInput = form.querySelector('input[name="password"]') as HTMLInputElement;
@@ -254,16 +268,15 @@ export default function SignInPage() {
                     if (passwordInput) passwordInput.value = "admin123";
                   }
                 }}
-                className="w-full text-left px-2 py-1.5 bg-nardo-gray-700 hover:bg-nardo-gray-600 rounded text-xs transition-colors"
+                className="w-full text-left px-3 py-2 bg-[#16161d] hover:bg-[#252530] rounded-lg text-xs transition-colors cursor-pointer border border-transparent hover:border-[#2a2a35]"
               >
-                <span className="font-semibold text-cyber-orange">Admin:</span>{" "}
-                <span className="text-nardo-gray-300">admin@adrautoparts.com</span>
+                <span className="font-semibold text-red-400">Admin:</span>{" "}
+                <span className="text-gray-400">admin@adrautoparts.com</span>
               </button>
               <button
                 type="button"
                 onClick={(e) => {
-                  const form = (e.currentTarget.closest("form") as HTMLFormElement) || 
-                    document.querySelector("form");
+                  const form = (e.currentTarget.closest(".bg-\\[\\#16161d\\]") as HTMLElement)?.querySelector("form");
                   if (form) {
                     const emailInput = form.querySelector('input[name="email"]') as HTMLInputElement;
                     const passwordInput = form.querySelector('input[name="password"]') as HTMLInputElement;
@@ -271,16 +284,15 @@ export default function SignInPage() {
                     if (passwordInput) passwordInput.value = "staff123";
                   }
                 }}
-                className="w-full text-left px-2 py-1.5 bg-nardo-gray-700 hover:bg-nardo-gray-600 rounded text-xs transition-colors"
+                className="w-full text-left px-3 py-2 bg-[#16161d] hover:bg-[#252530] rounded-lg text-xs transition-colors cursor-pointer border border-transparent hover:border-[#2a2a35]"
               >
-                <span className="font-semibold text-cyber-blue">Staff:</span>{" "}
-                <span className="text-nardo-gray-300">staff@adrautoparts.com</span>
+                <span className="font-semibold text-blue-400">Staff:</span>{" "}
+                <span className="text-gray-400">staff@adrautoparts.com</span>
               </button>
               <button
                 type="button"
                 onClick={(e) => {
-                  const form = (e.currentTarget.closest("form") as HTMLFormElement) || 
-                    document.querySelector("form");
+                  const form = (e.currentTarget.closest(".bg-\\[\\#16161d\\]") as HTMLElement)?.querySelector("form");
                   if (form) {
                     const emailInput = form.querySelector('input[name="email"]') as HTMLInputElement;
                     const passwordInput = form.querySelector('input[name="password"]') as HTMLInputElement;
@@ -288,24 +300,23 @@ export default function SignInPage() {
                     if (passwordInput) passwordInput.value = "user123";
                   }
                 }}
-                className="w-full text-left px-2 py-1.5 bg-nardo-gray-700 hover:bg-nardo-gray-600 rounded text-xs transition-colors"
+                className="w-full text-left px-3 py-2 bg-[#16161d] hover:bg-[#252530] rounded-lg text-xs transition-colors cursor-pointer border border-transparent hover:border-[#2a2a35]"
               >
-                <span className="font-semibold text-vibrant-red">User:</span>{" "}
-                <span className="text-nardo-gray-300">user@adrautoparts.com</span>
+                <span className="font-semibold text-emerald-400">User:</span>{" "}
+                <span className="text-gray-400">user@adrautoparts.com</span>
               </button>
             </div>
-            <p className="text-xs text-nardo-gray-500 mt-2">Password: Any 6+ characters</p>
+            <p className="text-[10px] text-gray-600 mt-2">Password: Any 6+ characters</p>
           </div>
 
-          <div className="mt-6 text-center">
-            <p className="text-text-secondary mb-2">Don&apos;t have an account?</p>
-            <Link href="/auth/signup" className="text-cyber-blue hover:text-cyber-blue-400 font-semibold">
-              Create one here
-            </Link>
-          </div>
-
-          <div className="mt-6 text-center">
-            <Link href="/" className="text-text-secondary hover:text-text-primary">
+          <div className="mt-6 text-center space-y-3">
+            <p className="text-gray-500 text-sm">
+              Don&apos;t have an account?{" "}
+              <Link href="/auth/signup" className="text-red-400 hover:text-red-300 font-medium transition-colors">
+                Create one
+              </Link>
+            </p>
+            <Link href="/" className="block text-gray-600 hover:text-gray-400 text-sm transition-colors">
               ← Back to Home
             </Link>
           </div>

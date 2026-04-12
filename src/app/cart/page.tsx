@@ -1,7 +1,6 @@
 "use client";
 
 import { useCart } from "@/context/cart-context";
-import { Card, Button, Badge, Alert } from "@/components/ui/modern-components";
 import { Trash2, ShoppingCart, Plus, Minus } from "lucide-react";
 import Link from "next/link";
 
@@ -9,151 +8,140 @@ export default function CartPage() {
   const { items, removeItem, updateQuantity, totalPrice, clearCart } = useCart();
 
   return (
-    <main className="min-h-screen bg-nardo-gray-900">
-      <nav className="bg-nardo-gray-800 border-b border-nardo-gray-700 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <Link href="/parts" className="text-nardo-gray-100 hover:text-cyber-blue-500 font-semibold">
-              ← Back to Parts
-            </Link>
-            <h1 className="text-xl font-bold text-white">Shopping Cart</h1>
-            <div className="w-20"></div>
+    <main className="min-h-screen bg-[#0f0f12]">
+      <section className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-10">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center">
+              <ShoppingCart className="w-5 h-5 text-red-400" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-white">Shopping Cart</h1>
+              <p className="text-gray-500 text-sm">{items.length} item{items.length !== 1 ? "s" : ""} in your cart</p>
+            </div>
           </div>
         </div>
-      </nav>
 
-      <section className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
         {items.length === 0 ? (
-          <Card className="text-center py-12">
-            <ShoppingCart className="w-16 h-16 text-nardo-gray-600 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-white mb-2">Your cart is empty</h2>
-            <p className="text-nardo-gray-400 mb-6">
-              Browse our parts catalog and add items to get started.
-            </p>
-            <Link href="/parts">
-              <Button variant="primary">Continue Shopping</Button>
+          <div className="bg-[#16161d] border border-[#2a2a35] rounded-2xl p-12 text-center">
+            <ShoppingCart className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+            <h2 className="text-xl font-bold text-white mb-2">Your cart is empty</h2>
+            <p className="text-gray-500 text-sm mb-6">Browse our parts catalog and add items to get started.</p>
+            <Link
+              href="/parts"
+              className="inline-flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-red-500 to-red-600 text-white font-medium rounded-xl hover:from-red-600 hover:to-red-700 transition-all text-sm"
+            >
+              Continue Shopping
             </Link>
-          </Card>
+          </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Cart Items */}
-            <div className="lg:col-span-2 space-y-4">
-              <h2 className="text-2xl font-bold text-white mb-6">Cart Items ({items.length})</h2>
-
+            <div className="lg:col-span-2 space-y-3">
               {items.map((item) => (
-                <Card key={item.id} className="flex items-center justify-between p-4">
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-white">{item.name}</h3>
-                    <p className="text-sm text-nardo-gray-400">SKU: {item.sku}</p>
-                    <p className="text-lg font-bold text-cyber-blue-400 mt-2">
+                <div key={item.id} className="bg-[#16161d] border border-[#2a2a35] rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center gap-4">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-base font-semibold text-white">{item.name}</h3>
+                    <p className="text-xs text-gray-500 mt-0.5">SKU: {item.sku}</p>
+                    <p className="text-base font-bold text-blue-400 mt-2">
                       ₱{item.price.toLocaleString()}
                     </p>
                   </div>
 
-                  <div className="flex items-center gap-3 mx-6">
+                  <div className="flex items-center gap-2">
                     <button
-                      onClick={() =>
-                        updateQuantity(item.partId, item.quantity - 1)
-                      }
-                      className="p-1 hover:bg-nardo-gray-700 rounded transition"
+                      onClick={() => updateQuantity(item.partId, item.quantity - 1)}
+                      className="p-2 bg-[#1e1e28] border border-[#2a2a35] rounded-lg hover:bg-[#252530] transition-colors cursor-pointer"
                     >
-                      <Minus className="w-4 h-4 text-nardo-gray-300" />
+                      <Minus className="w-3.5 h-3.5 text-gray-400" />
                     </button>
 
                     <input
                       type="number"
                       min="1"
                       value={item.quantity}
-                      onChange={(e) =>
-                        updateQuantity(item.partId, parseInt(e.target.value) || 1)
-                      }
-                      className="w-16 px-2 py-1 text-center bg-nardo-gray-800 border border-nardo-gray-700 rounded text-white"
+                      onChange={(e) => updateQuantity(item.partId, parseInt(e.target.value) || 1)}
+                      className="w-14 px-2 py-1.5 text-center bg-[#1e1e28] border border-[#2a2a35] rounded-lg text-white text-sm outline-none focus:border-blue-500/50"
                     />
 
                     <button
-                      onClick={() =>
-                        updateQuantity(item.partId, item.quantity + 1)
-                      }
-                      className="p-1 hover:bg-nardo-gray-700 rounded transition"
+                      onClick={() => updateQuantity(item.partId, item.quantity + 1)}
+                      className="p-2 bg-[#1e1e28] border border-[#2a2a35] rounded-lg hover:bg-[#252530] transition-colors cursor-pointer"
                     >
-                      <Plus className="w-4 h-4 text-nardo-gray-300" />
+                      <Plus className="w-3.5 h-3.5 text-gray-400" />
                     </button>
                   </div>
 
-                  <div className="text-right mr-6">
-                    <p className="text-sm text-nardo-gray-400">Subtotal</p>
-                    <p className="text-xl font-bold text-white">
+                  <div className="text-right sm:w-28">
+                    <p className="text-xs text-gray-500">Subtotal</p>
+                    <p className="text-lg font-bold text-white">
                       ₱{(item.price * item.quantity).toLocaleString()}
                     </p>
                   </div>
 
                   <button
                     onClick={() => removeItem(item.partId)}
-                    className="p-2 text-nardo-gray-400 hover:text-cyber-blue-500 hover:bg-nardo-gray-800 rounded transition"
+                    className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all cursor-pointer"
                   >
-                    <Trash2 className="w-5 h-5" />
+                    <Trash2 className="w-4 h-4" />
                   </button>
-                </Card>
+                </div>
               ))}
 
-              <Button
-                variant="ghost"
+              <button
                 onClick={clearCart}
-                className="text-danger w-full"
+                className="w-full py-2.5 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/5 rounded-xl transition-all cursor-pointer"
               >
                 Clear Cart
-              </Button>
+              </button>
             </div>
 
             {/* Order Summary */}
             <div>
-              <Card className="sticky top-24">
-                <h2 className="text-2xl font-bold text-white mb-6">Order Summary</h2>
+              <div className="bg-[#16161d] border border-[#2a2a35] rounded-2xl p-6 sticky top-24">
+                <h2 className="text-lg font-bold text-white mb-5">Order Summary</h2>
 
-                <div className="space-y-3 border-b border-nardo-gray-700 pb-4 mb-4">
-                  <div className="flex justify-between">
-                    <span className="text-nardo-gray-400">Subtotal</span>
-                    <span className="text-white font-semibold">
-                      ₱{totalPrice.toLocaleString()}
-                    </span>
+                <div className="space-y-3 border-b border-[#2a2a35] pb-4 mb-4">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-400">Subtotal</span>
+                    <span className="text-white font-medium">₱{totalPrice.toLocaleString()}</span>
                   </div>
-
-                  <div className="flex justify-between">
-                    <span className="text-nardo-gray-400">Shipping</span>
-                    <Badge variant="success">FREE</Badge>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-400">Shipping</span>
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400">FREE</span>
                   </div>
-
-                  <div className="flex justify-between">
-                    <span className="text-nardo-gray-400">Tax</span>
-                    <span className="text-white font-semibold">
-                      ₱{Math.round(totalPrice * 0.12).toLocaleString()}
-                    </span>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-400">Tax (12%)</span>
+                    <span className="text-white font-medium">₱{Math.round(totalPrice * 0.12).toLocaleString()}</span>
                   </div>
                 </div>
 
-                <div className="flex justify-between mb-6 text-xl">
-                  <span className="font-bold text-white">Total</span>
-                  <span className="font-bold text-cyber-blue-400">
+                <div className="flex justify-between mb-6">
+                  <span className="text-base font-bold text-white">Total</span>
+                  <span className="text-lg font-bold text-red-400">
                     ₱{Math.round(totalPrice * 1.12).toLocaleString()}
                   </span>
                 </div>
 
-                <Link href="/checkout" className="block mb-3">
-                  <Button variant="primary" className="w-full">
-                    Proceed to Checkout
-                  </Button>
+                <Link
+                  href="/checkout"
+                  className="block w-full py-3 bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold rounded-xl hover:from-red-600 hover:to-red-700 transition-all text-center text-sm mb-3 shadow-lg shadow-red-500/20"
+                >
+                  Proceed to Checkout
                 </Link>
 
-                <Link href="/parts" className="block">
-                  <Button variant="secondary" className="w-full">
-                    Continue Shopping
-                  </Button>
+                <Link
+                  href="/parts"
+                  className="block w-full py-3 bg-[#1e1e28] border border-[#2a2a35] text-gray-300 font-medium rounded-xl hover:bg-[#252530] transition-all text-center text-sm"
+                >
+                  Continue Shopping
                 </Link>
 
-                <Alert type="info" className="mt-4">
+                <div className="mt-4 bg-blue-500/10 border border-blue-500/20 rounded-xl px-4 py-3 text-blue-400 text-xs">
                   💳 Secure checkout with Stripe. We also accept cash on delivery.
-                </Alert>
-              </Card>
+                </div>
+              </div>
             </div>
           </div>
         )}
