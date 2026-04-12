@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import AuthCTA from "@/components/auth-cta";
 import { Cpu, ShoppingBag, Clock, Shield, Truck, Headphones, ChevronRight } from "lucide-react";
 
@@ -7,8 +8,18 @@ export default function Home() {
     <main className="min-h-screen bg-[#0f0f12]">
       {/* Hero Section */}
       <section className="relative overflow-hidden">
-        {/* Background effects */}
-        <div className="absolute inset-0 bg-gradient-to-br from-red-600/5 via-transparent to-blue-600/5" />
+        {/* Cover Background — blended with gradient overlay */}
+        <div className="absolute inset-0">
+          <Image
+            src="/cover.png"
+            alt=""
+            fill
+            className="object-cover object-center opacity-[0.07]"
+            priority
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#0f0f12]/40 via-[#0f0f12]/80 to-[#0f0f12]" />
+          <div className="absolute inset-0 bg-gradient-to-r from-red-600/5 via-transparent to-blue-600/5" />
+        </div>
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-red-500/5 rounded-full blur-3xl" />
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-24">
@@ -184,9 +195,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center text-white font-bold text-sm">
-                A
-              </div>
+              <Image src="/logo.png" alt="ADR" width={32} height={32} className="rounded-lg" />
               <span className="text-white font-bold text-lg">ADR Autoparts</span>
             </div>
             <div className="flex items-center gap-6 text-sm text-gray-500">

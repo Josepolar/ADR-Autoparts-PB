@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { CartProvider } from "@/context/cart-context";
 import { AuthProvider } from "@/context/auth-context";
+import { ThemeProvider } from "@/context/theme-context";
 import { Navbar } from "@/components/navbar";
 
 export const metadata: Metadata = {
@@ -9,10 +10,8 @@ export const metadata: Metadata = {
   description:
     "Custom automotive super-app for ECU firmware, parts retail, and service booking",
   icons: [
-    {
-      rel: "icon",
-      url: "/favicon.ico",
-    },
+    { rel: "icon", url: "/favicon.png", type: "image/png" },
+    { rel: "apple-touch-icon", url: "/apple-icon.png" },
   ],
 };
 
@@ -26,25 +25,27 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" className="dark" suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="theme-color" content="#ff0000" />
+        <meta name="theme-color" content="#0f0f12" />
         {/* Bold Display Fonts */}
-        <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Squada+One&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Squada+One&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
         {/* Prevent browser caching of auth state */}
         <meta httpEquiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0" />
         <meta httpEquiv="Pragma" content="no-cache" />
         <meta httpEquiv="Expires" content="0" />
       </head>
-      <body className="bg-nardo-gray-900 text-nardo-gray-100">
-        <AuthProvider>
-          <Navbar />
-          <CartProvider>
-            {children}
-          </CartProvider>
-        </AuthProvider>
+      <body className="bg-[#0f0f12] text-white transition-colors duration-300">
+        <ThemeProvider>
+          <AuthProvider>
+            <Navbar />
+            <CartProvider>
+              {children}
+            </CartProvider>
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
