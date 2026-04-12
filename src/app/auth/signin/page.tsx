@@ -3,18 +3,29 @@
 import Link from "next/link";
 import { FormEvent, useState, useEffect } from "react";
 import PasswordInput from "@/components/auth/password-input";
+import { useAuth } from "@/context/auth-context";
 
 export default function SignInPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [isClient, setIsClient] = useState(false);
+  const { setAuth } = useAuth();
 
   useEffect(() => {
     setIsClient(true);
-    // Set cache-control headers to prevent back-button logout
-    // This is handled by the page itself for client-side security
+
+    // If already authenticated, redirect to the appropriate dashboard
     if (typeof window !== "undefined") {
-      // Disable browser back-button caching for auth pages
+      const storedRole = sessionStorage.getItem("userRole");
+      if (storedRole) {
+        const dashboardPath = getRolePathFromRole(storedRole);
+        window.location.href = dashboardPath;
+        return;
+      }
+    }
+
+    // Disable browser back-button caching for auth pages
+    if (typeof window !== "undefined") {
       window.history.pushState(null, "", window.location.href);
       window.addEventListener("popstate", () => {
         window.history.pushState(null, "", window.location.href);
@@ -76,6 +87,7 @@ export default function SignInPage() {
         const response = await fetch("/api/auth/signin", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          credentials: "same-origin",
           body: JSON.stringify({ email, role: userRole }),
         });
 
@@ -89,6 +101,9 @@ export default function SignInPage() {
         return;
       }
       
+      // Update auth context state
+      setAuth(email, userRole);
+
       // Store role in sessionStorage for client-side access control
       if (typeof window !== "undefined") {
         sessionStorage.setItem("userRole", userRole);
@@ -139,21 +154,27 @@ export default function SignInPage() {
   }
 
   /**
+   * Get the appropriate dashboard path from a role string
+   */
+  function getRolePathFromRole(role: string): string {
+    switch (role) {
+      case "admin":
+        return "/admin";
+      case "staff":
+        return "/staff";
+      case "user":
+      default:
+        return "/";
+    }
+  }
+
+  /**
    * Get the appropriate dashboard path based on user role
    * Redirects to role-specific dashboard after successful login
    */
   function getRolePath(email: string): string {
     const role = detectUserRole(email);
-
-    switch (role) {
-      case "admin":
-        return "/admin"; // Admin dashboard
-      case "staff":
-        return "/staff"; // Staff portal
-      case "user":
-      default:
-        return "/"; // Landing page for regular users
-    }
+    return getRolePathFromRole(role);
   }
 
   if (!isClient) {
