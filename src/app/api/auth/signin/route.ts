@@ -99,8 +99,9 @@ export async function POST(request: NextRequest) {
     return response;
   } catch (error) {
     console.error("Sign in error:", error);
+    const message = error instanceof Error ? error.message : "Sign in failed";
     return NextResponse.json(
-      { success: false, message: "Sign in failed" },
+      { success: false, message: "Sign in failed", debug: process.env.NODE_ENV !== "production" ? message : undefined },
       { status: 500 }
     );
   }
