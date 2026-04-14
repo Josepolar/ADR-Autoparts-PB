@@ -25,9 +25,9 @@ interface StaffUser {
   name: string | null;
   email: string;
   isVerified: boolean;
-  verifiedAt: string | null;
+  verifiedAt: Date | null;
   verifiedBy: string | null;
-  createdAt: string;
+  createdAt: Date;
 }
 
 export default function StaffManagement() {
