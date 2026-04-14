@@ -8,6 +8,7 @@
 */
 
 import { db } from "../src/server/db";
+import bcryptjs from "bcryptjs";
 
 async function main() {
   console.log("🌱 Starting database seed...");
@@ -39,31 +40,37 @@ async function main() {
     // ============================================
     console.log("👥 Creating sample users...");
     
+    const adminHash = await bcryptjs.hash("admin123", 12);
     const adminUser = await db.user.create({
       data: {
-        email: "admin@adr-autoparts.com",
+        email: "admin@adrautoparts.com",
         name: "Admin User",
-        passwordHash: "admin123", // TODO: Hash in production
+        passwordHash: adminHash,
         role: "ADMIN",
         phone: "+639175551234",
       },
     });
 
+    const mechanicHash = await bcryptjs.hash("mechanic123", 12);
     const mechanicUser = await db.user.create({
       data: {
-        email: "mechanic@adr-autoparts.com",
+        email: "mechanic@adrautoparts.com",
         name: "John Mechanic",
-        passwordHash: "mechanic123", // TODO: Hash in production
+        passwordHash: mechanicHash,
         role: "MECHANIC",
+        isVerified: true,
+        verifiedAt: new Date(),
+        verifiedBy: "admin@adrautoparts.com",
         phone: "+639175555678",
       },
     });
 
+    const customerHash = await bcryptjs.hash("customer123", 12);
     const customer1 = await db.user.create({
       data: {
         email: "customer1@example.com",
         name: "Maria Santos",
-        passwordHash: "customer123", // TODO: Hash in production
+        passwordHash: customerHash,
         role: "CUSTOMER",
         phone: "+639175559999",
         address: "123 Main St",
@@ -77,7 +84,7 @@ async function main() {
       data: {
         email: "customer2@example.com",
         name: "Juan Cruz",
-        passwordHash: "customer123",
+        passwordHash: customerHash,
         role: "CUSTOMER",
         phone: "+639175558888",
         address: "456 Oak Ave",
