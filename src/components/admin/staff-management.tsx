@@ -49,10 +49,9 @@ export default function StaffManagement() {
 
   // Auto-dismiss success message
   useEffect(() => {
-    if (success) {
-      const timer = setTimeout(() => setSuccess(""), 4000);
-      return () => clearTimeout(timer);
-    }
+    if (!success) return;
+    const timer = setTimeout(() => setSuccess(""), 4000);
+    return () => clearTimeout(timer);
   }, [success]);
 
   async function loadStaff() {
