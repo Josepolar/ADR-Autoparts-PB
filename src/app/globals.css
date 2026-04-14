@@ -263,6 +263,21 @@ html.light .opacity-\[0\.07\] {
   animation: slideInFromRight 0.3s ease-out;
 }
 
+@keyframes slideInToast {
+  from {
+    opacity: 0;
+    transform: translateX(100%) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+.animate-slide-in {
+  animation: slideInToast 0.3s ease-out;
+}
+
 .animate-fade-in {
   animation: fadeIn 0.3s ease-out;
 }

@@ -28,6 +28,16 @@ model User {
   phone         String?
   role          UserRole   @default(CUSTOMER)
   
+  // OAuth / Social Login
+  provider      String?    // "credentials" | "google" | "facebook"
+  providerId    String?    // OAuth provider's user ID
+  image         String?    // Avatar URL from OAuth provider
+  
+  // Staff verification (admin-managed)
+  isVerified    Boolean    @default(false) // Staff/mechanic must be verified by admin
+  verifiedAt    DateTime?
+  verifiedBy    String?    // Admin user ID who verified
+  
   // Profile info
   profileImage  String?
   address       String?
@@ -46,6 +56,8 @@ model User {
   emailVerified DateTime?
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
+
+  @@index([provider, providerId])
 }
 
 // ============================================

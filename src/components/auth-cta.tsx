@@ -71,12 +71,12 @@ export function AuthCTA() {
           orders, and appointments in one place.
         </p>
         <div className="flex gap-3 justify-center flex-wrap">
-          <Link href="/auth/signup" className="px-8 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold rounded-xl hover:from-red-600 hover:to-red-700 transition-all text-sm shadow-lg shadow-red-500/20">
+          <a href="/auth/signup" className="px-8 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold rounded-xl hover:from-red-600 hover:to-red-700 transition-all text-sm shadow-lg shadow-red-500/20">
             Create Account
-          </Link>
-          <Link href="/auth/signin" className="px-8 py-3 bg-[#1e1e28] border border-[#2a2a35] text-gray-300 font-semibold rounded-xl hover:bg-[#252530] transition-all text-sm">
+          </a>
+          <a href="/auth/signin" className="px-8 py-3 bg-[#1e1e28] border border-[#2a2a35] text-gray-300 font-semibold rounded-xl hover:bg-[#252530] transition-all text-sm">
             Sign In
-          </Link>
+          </a>
         </div>
       </div>
     </section>

@@ -31,6 +31,7 @@ import {
 import Link from "next/link";
 import LogoutButton from "@/components/auth/logout-button";
 import InventoryManagement from "@/components/admin/inventory-management";
+import StaffManagement from "@/components/admin/staff-management";
 
 interface Stats {
   totalUsers: number;
@@ -55,6 +56,7 @@ const sidebarItems = [
   { id: "overview", label: "Dashboard", icon: LayoutDashboard },
   { id: "orders", label: "Orders", icon: ShoppingCart },
   { id: "inventory", label: "Inventory", icon: Package },
+  { id: "staff", label: "Staff", icon: Users },
   { id: "immo", label: "Tuning Requests", icon: Wrench },
 ];
 
@@ -63,7 +65,7 @@ export default function AdminDashboard() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [immoRequests, setImmoRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"overview" | "orders" | "inventory" | "immo">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "orders" | "inventory" | "staff" | "immo">("overview");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
@@ -110,6 +112,7 @@ export default function AdminDashboard() {
       case "overview": return "Dashboard";
       case "orders": return "Orders";
       case "inventory": return "Inventory";
+      case "staff": return "Staff Management";
       case "immo": return "Tuning Requests";
     }
   };
@@ -498,6 +501,8 @@ export default function AdminDashboard() {
             </div>
           ) : activeTab === "inventory" ? (
             <InventoryManagement />
+          ) : activeTab === "staff" ? (
+            <StaffManagement />
           ) : null}
         </main>
       </div>

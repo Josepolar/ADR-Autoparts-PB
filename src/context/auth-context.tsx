@@ -23,6 +23,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Initialize auth state from sessionStorage
   useEffect(() => {
     if (typeof window !== "undefined") {
+      // Check for OAuth login cookie (set by Google/Facebook callback)
+      const oauthCookie = document.cookie
+        .split("; ")
+        .find((c) => c.startsWith("oauthLogin="));
+      if (oauthCookie) {
+        try {
+          const data = JSON.parse(decodeURIComponent(oauthCookie.split("=").slice(1).join("=")));
+          if (data.role && data.email) {
+            sessionStorage.setItem("userRole", data.role);
+            sessionStorage.setItem("userEmail", data.email);
+            sessionStorage.setItem("authTimestamp", Date.now().toString());
+            setUserRole(data.role);
+            setUserEmail(data.email);
+            // Clear the short-lived cookie
+            document.cookie = "oauthLogin=; path=/; max-age=0";
+            setIsLoading(false);
+            return;
+          }
+        } catch {
+          // ignore malformed cookie
+        }
+      }
+
       const role = sessionStorage.getItem("userRole");
       const email = sessionStorage.getItem("userEmail");
       setUserRole(role);

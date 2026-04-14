@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
@@ -29,7 +30,7 @@ export async function POST(request: NextRequest) {
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
-      where: { email },
+      where: { email: email.toLowerCase().trim() },
     });
 
     if (existingUser) {
@@ -39,14 +40,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Hash the password
+    const passwordHash = await bcrypt.hash(password, 12);
+
     // Create new user with "CUSTOMER" role (default for security)
-    // In production, hash the password with bcrypt
     const newUser = await prisma.user.create({
       data: {
         name,
-        email,
-        passwordHash: password, // TODO: Hash with bcrypt in production
-        role: "CUSTOMER", // Always default to "CUSTOMER" for new signups - SECURITY CRITICAL
+        email: email.toLowerCase().trim(),
+        passwordHash,
+        role: "CUSTOMER",
       },
     });
 

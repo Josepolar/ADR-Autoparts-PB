@@ -19,9 +19,6 @@ const roleRoutes: Record<string, string[]> = {
   staff: ["/staff"],
 };
 
-// Auth pages that authenticated users should be redirected away from
-const authPages = ["/auth/signin", "/auth/signup"];
-
 /**
  * Get the dashboard path for a given role
  */
@@ -46,16 +43,9 @@ export function proxy(request: NextRequest) {
   const isAuthenticated = Boolean(sessionToken || authToken);
   const userRole = authToken || null;
 
-  // Check if this is an auth page (signin/signup)
-  const isAuthPage = authPages.some((page) => pathname.startsWith(page));
-
-  // If user is authenticated and visiting an auth page, redirect to their dashboard
-  if (isAuthenticated && isAuthPage) {
-    const dashboardPath = getDashboardPath(userRole || "user");
-    return NextResponse.redirect(new URL(dashboardPath, request.url), {
-      status: 307,
-    });
-  }
+  // Auth pages are always accessible — the pages themselves handle
+  // redirect logic client-side via sessionStorage checks.
+  // This avoids stale cookies causing infinite redirects to "/".
 
   // Check if the route requires a specific role
   const isRoleRoute = Object.entries(roleRoutes).find(([, routes]) =>

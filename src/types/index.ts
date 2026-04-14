@@ -432,6 +432,17 @@ export interface CreateAppointmentInput {
   scheduledStart: Date;
   scheduledEnd: Date;
   customerNotes?: string;
+  bookingMeta?: {
+    identifierType?: "PLATE_NUMBER" | "CONDUCTION_STICKER";
+    vehicleIdentifier?: string;
+    serviceMode?: "SHOP_VISIT" | "HOME_SERVICE";
+    paymentOption?: "GCASH" | "MAYA" | "CASH_AT_COUNTER" | "QR_PH";
+    reservationFee?: number;
+    branchCode?: string;
+    preferredChannel?: "VIBER" | "MESSENGER" | "SMS";
+    contactNumber?: string;
+    photoReportingConsent?: boolean;
+  };
 }
 
 // ============================================

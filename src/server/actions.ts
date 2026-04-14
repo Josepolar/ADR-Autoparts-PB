@@ -2,6 +2,19 @@
 
 import { db } from "@/server/db";
 import { revalidatePath } from "next/cache";
+import { Decimal } from "@prisma/client/runtime/library";
+
+// Convert Prisma Decimal and BigInt objects to plain numbers so data can cross
+// the Server→Client Component boundary in Next.js.
+function serialize<T>(data: T): T {
+  return JSON.parse(
+    JSON.stringify(data, (_key, value) => {
+      if (value instanceof Decimal) return value.toNumber();
+      if (typeof value === "bigint") return Number(value);
+      return value;
+    })
+  ) as T;
+}
 
 // ============================================
 // FIRMWARE / AUTO ECU ACTIONS
@@ -21,7 +34,7 @@ export async function getFirmwareFiles() {
     });
     return {
       success: true,
-      data: files,
+      data: serialize(files),
     };
   } catch (error) {
     console.error("Error fetching firmware files:", error);
@@ -44,7 +57,7 @@ export async function getImmoRequests() {
     });
     return {
       success: true,
-      data: requests,
+      data: serialize(requests),
     };
   } catch (error) {
     console.error("Error fetching immo requests:", error);
@@ -78,7 +91,7 @@ export async function getParts(filters?: { category?: string; search?: string })
     });
     return {
       success: true,
-      data: parts,
+      data: serialize(parts),
     };
   } catch (error) {
     console.error("Error fetching parts:", error);
@@ -106,7 +119,7 @@ export async function getPartById(id: string) {
     }
     return {
       success: true,
-      data: part,
+      data: serialize(part),
     };
   } catch (error) {
     console.error("Error fetching part:", error);
@@ -123,12 +136,28 @@ export async function getPartById(id: string) {
 
 export async function getServices() {
   try {
-    const services = await db.service.findMany({
+    let services = await db.service.findMany({
       orderBy: { name: "asc" },
     });
+
+    // Auto-seed default services when table is empty
+    if (services.length === 0) {
+      await db.service.createMany({
+        data: [
+          { name: "Change Oil Package (PMS)", type: "OIL_CHANGE" as any, description: "Complete oil and filter change with multi-point inspection", basePrice: 1500, estimatedDurationMinutes: 30 },
+          { name: "Full Diagnostics", type: "DIAGNOSTICS" as any, description: "Complete vehicle diagnostics with ECU scan", basePrice: 2500, estimatedDurationMinutes: 60 },
+          { name: "Custom ECU Tuning", type: "CUSTOM_TUNING" as any, description: "High-performance ECU tuning service", basePrice: 8000, estimatedDurationMinutes: 120 },
+          { name: "Brake Service", type: "BRAKE_SERVICE" as any, description: "Brake pad replacement and brake fluid check", basePrice: 3500, estimatedDurationMinutes: 45 },
+          { name: "Tire Rotation & Balancing", type: "TIRE_SERVICE" as any, description: "Tire rotation, balancing, and pressure check", basePrice: 800, estimatedDurationMinutes: 30 },
+          { name: "Aircon Check & Clean", type: "INSPECTION" as any, description: "AC system check, cleaning, and refrigerant top-up", basePrice: 2000, estimatedDurationMinutes: 60 },
+        ],
+      });
+      services = await db.service.findMany({ orderBy: { name: "asc" } });
+    }
+
     return {
       success: true,
-      data: services,
+      data: serialize(services),
     };
   } catch (error) {
     console.error("Error fetching services:", error);
@@ -139,20 +168,44 @@ export async function getServices() {
   }
 }
 
-export async function getAvailableBays(_serviceId: string, date: Date) {
+export async function getAvailableBays(_serviceId: string, date: Date | string) {
   try {
-    const bays = await db.bay.findMany({
+    // Safely reconstruct date to avoid serialization issues across server action boundary
+    const dateObj = new Date(date);
+    const startOfDay = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate(), 0, 0, 0, 0);
+    const endOfDay = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate(), 23, 59, 59, 999);
+
+    let bays = await db.bay.findMany({
       include: {
         appointments: {
           where: {
             scheduledStart: {
-              gte: new Date(date.setHours(0, 0, 0, 0)),
-              lt: new Date(date.setHours(23, 59, 59, 999)),
+              gte: startOfDay,
+              lt: endOfDay,
             },
           },
         },
       },
     });
+
+    // Auto-create default bays when table is empty
+    if (bays.length === 0) {
+      await db.bay.createMany({
+        data: [
+          { name: "Bay 1", location: "Main Service Floor" },
+          { name: "Bay 2", location: "Main Service Floor" },
+        ],
+      });
+      bays = await db.bay.findMany({
+        include: {
+          appointments: {
+            where: {
+              scheduledStart: { gte: startOfDay, lt: endOfDay },
+            },
+          },
+        },
+      });
+    }
 
     const availableBays = bays.map((bay) => ({
       ...bay,
@@ -161,7 +214,7 @@ export async function getAvailableBays(_serviceId: string, date: Date) {
 
     return {
       success: true,
-      data: availableBays,
+      data: serialize(availableBays),
     };
   } catch (error) {
     console.error("Error fetching available bays:", error);
@@ -187,7 +240,7 @@ export async function getAppointments(userId?: string) {
     });
     return {
       success: true,
-      data: appointments,
+      data: serialize(appointments),
     };
   } catch (error) {
     console.error("Error fetching appointments:", error);
@@ -199,13 +252,27 @@ export async function getAppointments(userId?: string) {
 }
 
 export async function createAppointment(data: {
-  userId: string;
+  userEmail: string;
   serviceId: string;
   bayId: string;
   scheduledStart: Date;
   scheduledEnd: Date;
+  customerNotes?: string;
+  bookingMeta?: Record<string, unknown>;
 }) {
   try {
+    // Resolve user by email (never trust client-supplied IDs)
+    const user = await db.user.findUnique({
+      where: { email: data.userEmail },
+    });
+
+    if (!user) {
+      return {
+        success: false,
+        error: "User not found",
+      };
+    }
+
     // Get service to get the price
     const service = await db.service.findUnique({
       where: { id: data.serviceId },
@@ -220,11 +287,17 @@ export async function createAppointment(data: {
 
     const appointment = await db.appointment.create({
       data: {
-        userId: data.userId,
+        userId: user.id,
         serviceId: data.serviceId,
         bayId: data.bayId,
         scheduledStart: data.scheduledStart,
         scheduledEnd: data.scheduledEnd,
+        customerNotes: data.bookingMeta
+          ? JSON.stringify({
+              note: data.customerNotes || "",
+              meta: data.bookingMeta,
+            })
+          : data.customerNotes,
         servicePrice: service.basePrice,
         status: "SCHEDULED",
       },
@@ -232,7 +305,7 @@ export async function createAppointment(data: {
     revalidatePath("/rapide");
     return {
       success: true,
-      data: appointment,
+      data: serialize(appointment),
     };
   } catch (error) {
     console.error("Error creating appointment:", error);
@@ -263,12 +336,12 @@ export async function getAdminStats() {
 
     return {
       success: true,
-      data: {
+      data: serialize({
         totalUsers,
         totalOrders,
         totalRevenue: totalRevenue._sum.amount || 0,
         pendingImmoRequests,
-      },
+      }),
     };
   } catch (error) {
     console.error("Error fetching admin stats:", error);
@@ -292,7 +365,7 @@ export async function getOrdersData() {
     });
     return {
       success: true,
-      data: orders,
+      data: serialize(orders),
     };
   } catch (error) {
     console.error("Error fetching orders:", error);
@@ -314,7 +387,7 @@ export async function getInventoryData() {
     });
     return {
       success: true,
-      data: inventory,
+      data: serialize(inventory),
     };
   } catch (error) {
     console.error("Error fetching inventory:", error);
@@ -338,7 +411,7 @@ export async function updatePartStock(partId: string, quantity: number) {
     revalidatePath("/admin/inventory");
     return {
       success: true,
-      data: part,
+      data: serialize(part),
     };
   } catch (error) {
     console.error("Error updating part stock:", error);
@@ -357,7 +430,7 @@ export async function getAuditLogs() {
     });
     return {
       success: true,
-      data: logs,
+      data: serialize(logs),
     };
   } catch (error) {
     console.error("Error fetching audit logs:", error);
@@ -365,5 +438,148 @@ export async function getAuditLogs() {
       success: false,
       error: "Failed to fetch audit logs",
     };
+  }
+}
+
+// ============================================
+// STAFF MANAGEMENT ACTIONS (Admin Only)
+// ============================================
+
+export async function getStaffUsers() {
+  try {
+    const staff = await db.user.findMany({
+      where: { role: "MECHANIC" },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        isVerified: true,
+        verifiedAt: true,
+        verifiedBy: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: "desc" },
+    });
+    return { success: true, data: serialize(staff) };
+  } catch (error) {
+    console.error("Error fetching staff users:", error);
+    return { success: false, error: "Failed to fetch staff users" };
+  }
+}
+
+export async function createStaffUser(data: {
+  name: string;
+  email: string;
+  password: string;
+  adminEmail: string;
+}) {
+  try {
+    const bcrypt = await import("bcryptjs");
+
+    // Check admin is valid
+    const admin = await db.user.findUnique({ where: { email: data.adminEmail } });
+    if (!admin || admin.role !== "ADMIN") {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    // Check if email already taken
+    const existing = await db.user.findUnique({ where: { email: data.email.toLowerCase().trim() } });
+    if (existing) {
+      return { success: false, error: "Email already in use" };
+    }
+
+    const passwordHash = await bcrypt.hash(data.password, 12);
+
+    const staff = await db.user.create({
+      data: {
+        name: data.name,
+        email: data.email.toLowerCase().trim(),
+        passwordHash,
+        role: "MECHANIC",
+        isVerified: true,
+        verifiedAt: new Date(),
+        verifiedBy: data.adminEmail,
+      },
+    });
+
+    revalidatePath("/admin");
+    return {
+      success: true,
+      data: serialize({ id: staff.id, name: staff.name, email: staff.email }),
+    };
+  } catch (error) {
+    console.error("Error creating staff user:", error);
+    return { success: false, error: "Failed to create staff user" };
+  }
+}
+
+export async function verifyStaffUser(staffId: string, adminEmail: string) {
+  try {
+    const admin = await db.user.findUnique({ where: { email: adminEmail } });
+    if (!admin || admin.role !== "ADMIN") {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const staff = await db.user.update({
+      where: { id: staffId },
+      data: {
+        isVerified: true,
+        verifiedAt: new Date(),
+        verifiedBy: adminEmail,
+      },
+    });
+
+    revalidatePath("/admin");
+    return { success: true, data: serialize({ id: staff.id, email: staff.email }) };
+  } catch (error) {
+    console.error("Error verifying staff user:", error);
+    return { success: false, error: "Failed to verify staff user" };
+  }
+}
+
+export async function revokeStaffUser(staffId: string, adminEmail: string) {
+  try {
+    const admin = await db.user.findUnique({ where: { email: adminEmail } });
+    if (!admin || admin.role !== "ADMIN") {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const staff = await db.user.update({
+      where: { id: staffId },
+      data: {
+        isVerified: false,
+        verifiedAt: null,
+        verifiedBy: null,
+      },
+    });
+
+    revalidatePath("/admin");
+    return { success: true, data: serialize({ id: staff.id, email: staff.email }) };
+  } catch (error) {
+    console.error("Error revoking staff user:", error);
+    return { success: false, error: "Failed to revoke staff user" };
+  }
+}
+
+export async function deleteStaffUser(staffId: string, adminEmail: string) {
+  try {
+    const admin = await db.user.findUnique({ where: { email: adminEmail } });
+    if (!admin || admin.role !== "ADMIN") {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    // Ensure the target is a staff/mechanic user
+    const staff = await db.user.findUnique({ where: { id: staffId } });
+    if (!staff || staff.role !== "MECHANIC") {
+      return { success: false, error: "User is not a staff member" };
+    }
+
+    await db.user.delete({ where: { id: staffId } });
+
+    revalidatePath("/admin");
+    return { success: true };
+  } catch (error) {
+    console.error("Error deleting staff user:", error);
+    return { success: false, error: "Failed to delete staff user" };
   }
 }

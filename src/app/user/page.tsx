@@ -49,6 +49,26 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
+function parseBookingMeta(rawNotes: string | null | undefined) {
+  if (!rawNotes) {
+    return { note: "", meta: {} as Record<string, any> };
+  }
+
+  try {
+    const parsed = JSON.parse(rawNotes);
+    if (parsed && typeof parsed === "object" && "meta" in parsed) {
+      return {
+        note: String((parsed as any).note || ""),
+        meta: ((parsed as any).meta || {}) as Record<string, any>,
+      };
+    }
+  } catch {
+    // Fall back to plain text notes when payload is not JSON.
+  }
+
+  return { note: rawNotes, meta: {} as Record<string, any> };
+}
+
 export default function UserDashboard() {
   const [orders, setOrders] = useState<any[]>([]);
   const [appointments, setAppointments] = useState<any[]>([]);
@@ -503,6 +523,11 @@ export default function UserDashboard() {
                       key={apt.id}
                       className="p-4 bg-[#1e1e28] rounded-xl hover:bg-[#252530] transition-colors"
                     >
+                      {(() => {
+                        const parsed = parseBookingMeta(apt.customerNotes);
+                        const meta = parsed.meta;
+                        return (
+                          <>
                       <div className="flex items-center justify-between mb-2">
                         <div>
                           <p className="text-sm font-semibold text-white">{apt.service?.name || "Service"}</p>
@@ -518,12 +543,28 @@ export default function UserDashboard() {
                               minute: "2-digit",
                             })}
                           </p>
+                          {meta.vehicleIdentifier && (
+                            <p className="text-xs text-amber-300 mt-1">Identifier: {meta.vehicleIdentifier}</p>
+                          )}
+                          {(meta.branchName || meta.paymentOption || meta.preferredChannel) && (
+                            <p className="text-xs text-gray-500 mt-1">
+                              {[meta.branchName, meta.paymentOption?.replace(/_/g, " "), meta.preferredChannel]
+                                .filter(Boolean)
+                                .join(" • ")}
+                            </p>
+                          )}
                         </div>
                         <StatusBadge status={apt.status} />
                       </div>
+                      {parsed.note && (
+                        <p className="text-xs text-gray-400 mt-1">Note: {parsed.note}</p>
+                      )}
                       <div className="flex items-center justify-between mt-3 pt-3 border-t border-[#2a2a35]">
                         <span className="text-sm text-gray-400">₱{(apt.servicePrice || 0).toLocaleString()}</span>
                       </div>
+                          </>
+                        );
+                      })()}
                     </div>
                   ))}
                 </div>

@@ -213,10 +213,10 @@ export function Navbar() {
               </>
             ) : (
               <div className="flex items-center gap-3">
-                <Link href="/auth/signin" className="text-gray-400 hover:text-white transition-colors text-sm">Sign In</Link>
-                <Link href="/auth/signup" className="px-4 py-1.5 bg-gradient-to-r from-red-500 to-red-600 text-white text-sm font-medium rounded-lg hover:from-red-600 hover:to-red-700 transition-all">
+                <a href="/auth/signin" className="text-gray-400 hover:text-white transition-colors text-sm">Sign In</a>
+                <a href="/auth/signup" className="px-4 py-1.5 bg-gradient-to-r from-red-500 to-red-600 text-white text-sm font-medium rounded-lg hover:from-red-600 hover:to-red-700 transition-all">
                   Sign Up
-                </Link>
+                </a>
               </div>
             )}
           </div>
@@ -272,8 +272,8 @@ export function Navbar() {
               </>
             ) : (
               <>
-                <Link href="/auth/signin" className="block px-4 py-2 text-gray-400 hover:bg-[#1e1e28] transition-colors text-sm" onClick={() => setMobileMenuOpen(false)}>Sign In</Link>
-                <Link href="/auth/signup" className="block px-4 py-2 text-red-400 hover:bg-[#1e1e28] transition-colors text-sm" onClick={() => setMobileMenuOpen(false)}>Sign Up</Link>
+                <a href="/auth/signin" className="block px-4 py-2 text-gray-400 hover:bg-[#1e1e28] transition-colors text-sm" onClick={() => setMobileMenuOpen(false)}>Sign In</a>
+                <a href="/auth/signup" className="block px-4 py-2 text-red-400 hover:bg-[#1e1e28] transition-colors text-sm" onClick={() => setMobileMenuOpen(false)}>Sign Up</a>
               </>
             )}
           </div>

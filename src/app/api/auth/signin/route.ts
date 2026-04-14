@@ -1,52 +1,98 @@
 import { NextRequest, NextResponse } from "next/server";
+import { db } from "@/server/db";
+import bcryptjs from "bcryptjs";
 
 /**
- * Sign in endpoint that sets session cookies
- * This allows the middleware to validate sessions
+ * Sign in endpoint – authenticates against DB, sets session cookies
  */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { email, role } = body;
+    const { email, password } = body;
 
-    if (!email || !role) {
+    if (!email || !password) {
       return NextResponse.json(
-        { success: false, message: "Email and role are required" },
+        { success: false, message: "Email and password are required" },
         { status: 400 }
       );
     }
 
-    // Create response
+    // Find user in database
+    const user = await db.user.findUnique({
+      where: { email: email.toLowerCase().trim() },
+    });
+
+    if (!user) {
+      return NextResponse.json(
+        { success: false, message: "Invalid email or password" },
+        { status: 401 }
+      );
+    }
+
+    if (!user.passwordHash) {
+      return NextResponse.json(
+        { success: false, message: "This account uses social login. Please sign in with Google or Facebook." },
+        { status: 401 }
+      );
+    }
+
+    // Check password — support both hashed and plain-text (for legacy/demo accounts)
+    let passwordValid = false;
+    if (user.passwordHash.startsWith("$2")) {
+      // bcrypt hash
+      passwordValid = await bcryptjs.compare(password, user.passwordHash);
+    } else {
+      // Plain-text fallback for legacy/demo accounts
+      passwordValid = user.passwordHash === password;
+    }
+
+    if (!passwordValid) {
+      return NextResponse.json(
+        { success: false, message: "Invalid email or password" },
+        { status: 401 }
+      );
+    }
+
+    // Staff/mechanic accounts need admin verification
+    if (user.role === "MECHANIC" && !user.isVerified) {
+      return NextResponse.json(
+        { success: false, message: "Your staff account is pending admin verification. Please contact your administrator." },
+        { status: 403 }
+      );
+    }
+
+    // Map DB role to internal role string
+    const roleMap: Record<string, string> = {
+      ADMIN: "admin",
+      MECHANIC: "staff",
+      CUSTOMER: "user",
+    };
+    const role = roleMap[user.role] || "user";
+
     const response = NextResponse.json(
-      { success: true, message: "Signed in successfully" },
+      { success: true, message: "Signed in successfully", user: { id: user.id, email: user.email, role, name: user.name } },
       { status: 200 }
     );
 
-    // Set session cookies with proper security settings
-    // sessionToken: Contains user session identifier
     response.cookies.set("sessionToken", `session_${email}_${Date.now()}`, {
-      httpOnly: false, // Set to true in production for security
-      secure: false, // Set to true in production (HTTPS only)
+      httpOnly: false,
+      secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 60 * 60 * 24, // 24 hours
+      maxAge: 60 * 60 * 24,
       path: "/",
     });
-
-    // authToken: Contains user role for middleware validation
     response.cookies.set("authToken", role, {
-      httpOnly: false, // Set to true in production for security
-      secure: false, // Set to true in production (HTTPS only)
+      httpOnly: false,
+      secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 60 * 60 * 24, // 24 hours
+      maxAge: 60 * 60 * 24,
       path: "/",
     });
-
-    // Store email for reference
     response.cookies.set("userEmail", email, {
       httpOnly: false,
-      secure: false,
+      secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 60 * 60 * 24, // 24 hours
+      maxAge: 60 * 60 * 24,
       path: "/",
     });
 
