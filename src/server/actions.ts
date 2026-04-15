@@ -192,8 +192,10 @@ export async function getAvailableBays(_serviceId: string, date: Date | string) 
     if (bays.length === 0) {
       await db.bay.createMany({
         data: [
-          { name: "Bay 1", location: "Main Service Floor" },
-          { name: "Bay 2", location: "Main Service Floor" },
+          { name: "Bay 1", location: "ADR Santa Maria Branch" },
+          { name: "Bay 2", location: "ADR Santa Maria Branch" },
+          { name: "Bay 1", location: "ADR Antipolo Branch" },
+          { name: "Bay 2", location: "ADR Antipolo Branch" },
         ],
       });
       bays = await db.bay.findMany({
@@ -581,5 +583,149 @@ export async function deleteStaffUser(staffId: string, adminEmail: string) {
   } catch (error) {
     console.error("Error deleting staff user:", error);
     return { success: false, error: "Failed to delete staff user" };
+  }
+}
+
+// ============================================
+// QUOTATION ACTIONS
+// ============================================
+
+export async function getQuotations() {
+  try {
+    const quotations = await db.quotation.findMany({
+      orderBy: { createdAt: "desc" },
+    });
+    return { success: true, data: serialize(quotations) };
+  } catch (error) {
+    console.error("Error fetching quotations:", error);
+    return { success: false, error: "Failed to fetch quotations", data: [] };
+  }
+}
+
+export async function approveQuotation(quotationId: string, notes: string, reviewerId: string) {
+  try {
+    const quotation = await db.quotation.update({
+      where: { id: quotationId },
+      data: {
+        status: "APPROVED",
+        adminNotes: notes,
+        reviewedBy: reviewerId,
+        reviewedAt: new Date(),
+      },
+    });
+
+    revalidatePath("/admin");
+    revalidatePath("/staff");
+    return { success: true, data: serialize(quotation) };
+  } catch (error) {
+    console.error("Error approving quotation:", error);
+    return { success: false, error: "Failed to approve quotation" };
+  }
+}
+
+export async function rejectQuotation(quotationId: string, notes: string, reviewerId: string) {
+  try {
+    const quotation = await db.quotation.update({
+      where: { id: quotationId },
+      data: {
+        status: "REJECTED",
+        adminNotes: notes,
+        reviewedBy: reviewerId,
+        reviewedAt: new Date(),
+      },
+    });
+
+    revalidatePath("/admin");
+    revalidatePath("/staff");
+    return { success: true, data: serialize(quotation) };
+  } catch (error) {
+    console.error("Error rejecting quotation:", error);
+    return { success: false, error: "Failed to reject quotation" };
+  }
+}
+
+// ============================================
+// BOOKING ACTIONS
+// ============================================
+
+export async function getBookings() {
+  try {
+    const bookings = await db.booking.findMany({
+      orderBy: { createdAt: "desc" },
+    });
+    return { success: true, data: serialize(bookings) };
+  } catch (error) {
+    console.error("Error fetching bookings:", error);
+    return { success: false, error: "Failed to fetch bookings", data: [] };
+  }
+}
+
+export async function updateBookingStatus(
+  bookingId: string,
+  status: "CONFIRMED" | "COMPLETED" | "CANCELLED",
+  notes: string,
+  reviewerId: string
+) {
+  try {
+    const booking = await db.booking.update({
+      where: { id: bookingId },
+      data: {
+        status,
+        adminNotes: notes,
+        reviewedBy: reviewerId,
+        reviewedAt: new Date(),
+      },
+    });
+
+    revalidatePath("/admin");
+    revalidatePath("/staff");
+    return { success: true, data: serialize(booking) };
+  } catch (error) {
+    console.error("Error updating booking:", error);
+    return { success: false, error: "Failed to update booking" };
+  }
+}
+
+// ============================================
+// NOTIFICATION ACTIONS
+// ============================================
+
+export async function getNotifications(role: "ADMIN" | "MECHANIC") {
+  try {
+    const notifications = await db.notification.findMany({
+      where: { forRole: role },
+      orderBy: { createdAt: "desc" },
+      take: 30,
+    });
+    return { success: true, data: serialize(notifications) };
+  } catch (error) {
+    console.error("Error fetching notifications:", error);
+    return { success: false, error: "Failed to fetch notifications", data: [] };
+  }
+}
+
+export async function markNotificationRead(notificationId: string) {
+  try {
+    await db.notification.update({
+      where: { id: notificationId },
+      data: { isRead: true },
+    });
+    return { success: true };
+  } catch (error) {
+    console.error("Error marking notification read:", error);
+    return { success: false, error: "Failed to update notification" };
+  }
+}
+
+export async function markAllNotificationsRead(role: "ADMIN" | "MECHANIC") {
+  try {
+    await db.notification.updateMany({
+      where: { forRole: role, isRead: false },
+      data: { isRead: true },
+    });
+    return { success: true };
+  } catch (error) {
+    console.error("Error marking notifications read:", error);
+    return { success: false, error: "Failed to update notifications" };
   }
 }

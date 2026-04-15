@@ -527,6 +527,90 @@ model Appointment {
 // AUDIT & LOGGING
 // ============================================
 
+// ============================================
+// QUOTATIONS (from landing page form)
+// ============================================
+
+enum QuotationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model Quotation {
+  id            String          @id @default(cuid())
+  name          String
+  email         String
+  phone         String?
+  items         String          // Description of requested parts/services
+  status        QuotationStatus @default(PENDING)
+  adminNotes    String?         // Notes when approving/rejecting
+  reviewedBy    String?         // staff/admin user id
+  reviewedAt    DateTime?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@index([status])
+  @@index([email])
+}
+
+// ============================================
+// BOOKING REQUESTS (from landing page form)
+// ============================================
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+model Booking {
+  id            String        @id @default(cuid())
+  name          String
+  email         String
+  phone         String
+  service       String
+  date          DateTime
+  status        BookingStatus  @default(PENDING)
+  adminNotes    String?
+  reviewedBy    String?
+  reviewedAt    DateTime?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@index([status])
+  @@index([email])
+}
+
+// ============================================
+// NOTIFICATIONS
+// ============================================
+
+enum NotificationType {
+  NEW_ORDER
+  NEW_BOOKING
+  NEW_QUOTATION
+  QUOTATION_APPROVED
+  QUOTATION_REJECTED
+  BOOKING_CONFIRMED
+  BOOKING_CANCELLED
+}
+
+model Notification {
+  id            String           @id @default(cuid())
+  type          NotificationType
+  title         String
+  message       String
+  entityId      String?          // Related entity ID (quotation/booking/order)
+  isRead        Boolean          @default(false)
+  forRole       UserRole         // ADMIN or MECHANIC (staff)
+  createdAt     DateTime         @default(now())
+
+  @@index([forRole, isRead])
+  @@index([createdAt])
+}
+
 enum AuditAction {
   CREATE
   UPDATE

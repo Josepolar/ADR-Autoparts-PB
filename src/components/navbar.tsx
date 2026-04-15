@@ -1,280 +1,251 @@
-﻿"use client";
+"use client";
 
-import { useAuth } from "@/context/auth-context";
 import Link from "next/link";
 import Image from "next/image";
-import { Menu, X, User, Search } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { Menu, X, LogIn } from "lucide-react";
+import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { useAuth } from "@/context/auth-context";
 import LogoutButton from "@/components/auth/logout-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 
-const quickLinks = [
-  { label: "ECU Firmware", href: "/autoecu", tag: "AutoECU" },
-  { label: "Brake Pads", href: "/parts", tag: "Parts" },
-  { label: "Oil Change", href: "/rapide", tag: "Service" },
-  { label: "Performance Tuning", href: "/autoecu", tag: "AutoECU" },
-  { label: "Air Filters", href: "/parts", tag: "Parts" },
-  { label: "Wheel Alignment", href: "/rapide", tag: "Service" },
+const centerLinks = [
+  { label: "Services", href: "#services" },
+  { label: "Products", href: "#products" },
+  { label: "Maintenance", href: "#maintenance" },
 ];
 
-const placeholders = [
-  "Search parts, firmware, or services...",
-  "Try \"brake pads\" or \"ECU tune\"...",
-  "What does your car need today?",
+const rightLinks = [
+  { label: "Request Ticket", href: "#request-ticket" },
+  { label: "Book Now", href: "#book-now" },
+  { label: "Quotation", href: "#quotation" },
 ];
-
-const tagColors: Record<string, string> = {
-  AutoECU: "bg-red-500/10 text-red-400",
-  Parts: "bg-blue-500/10 text-blue-400",
-  Service: "bg-amber-500/10 text-amber-400",
-};
 
 export function Navbar() {
-  const { userRole, userEmail, isAuthenticated } = useAuth();
+  const { userRole, isAuthenticated } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [placeholderIdx, setPlaceholderIdx] = useState(0);
-  const searchRef = useRef<HTMLDivElement>(null);
-  const searchInputRef = useRef<HTMLInputElement>(null);
+  const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
 
-  // Rotate placeholder
   useEffect(() => {
-    const interval = setInterval(() => {
-      setPlaceholderIdx((i) => (i + 1) % placeholders.length);
-    }, 4000);
-    return () => clearInterval(interval);
+    const onScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Close search on outside click
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
-        setSearchOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, []);
-
-  // Keyboard shortcut: "/" to focus search
-  useEffect(() => {
-    function handleKey(e: KeyboardEvent) {
-      if (e.key === "/" && !["INPUT", "TEXTAREA", "SELECT"].includes((e.target as HTMLElement).tagName)) {
-        e.preventDefault();
-        setSearchOpen(true);
-        setTimeout(() => searchInputRef.current?.focus(), 50);
-      }
-      if (e.key === "Escape") {
-        setSearchOpen(false);
-      }
-    }
-    document.addEventListener("keydown", handleKey);
-    return () => document.removeEventListener("keydown", handleKey);
-  }, []);
-
-  // Hide global navbar on admin/staff/user pages (they use sidebar navigation)
-  if (pathname?.startsWith("/admin") || pathname?.startsWith("/staff") || pathname?.startsWith("/user")) {
+  if (
+    pathname?.startsWith("/admin") ||
+    pathname?.startsWith("/staff") ||
+    pathname?.startsWith("/user")
+  ) {
     return null;
   }
 
-  const filtered = searchQuery.length > 0
-    ? quickLinks.filter((s) => s.label.toLowerCase().includes(searchQuery.toLowerCase()))
-    : quickLinks;
-
-  function handleSearchSelect(href: string) {
-    setSearchOpen(false);
-    setSearchQuery("");
-    router.push(href);
-  }
-
-  function handleSearchSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      setSearchOpen(false);
-      router.push(`/parts?search=${encodeURIComponent(searchQuery.trim())}`);
-      setSearchQuery("");
+  function scrollTo(hash: string) {
+    setMobileMenuOpen(false);
+    if (pathname !== "/") {
+      router.push("/" + hash);
+      return;
     }
+    const el = document.querySelector(hash);
+    if (el) el.scrollIntoView({ behavior: "smooth" });
   }
 
   return (
-    <nav className="bg-[#16161d]/95 border-b border-[#2a2a35] sticky top-0 z-50 backdrop-blur-xl supports-[backdrop-filter]:bg-[#16161d]/80">
+    <nav
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        scrolled
+          ? "bg-[#0a0a0f]/95 backdrop-blur-xl border-b border-[#2a2a35]/60 shadow-lg shadow-black/20"
+          : "bg-transparent"
+      }`}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16 gap-4">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2.5 shrink-0">
+        <div className="flex items-center justify-between h-16 lg:h-20">
+          {/* Left — Brand */}
+          <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
             <Image
               src="/logo.png"
-              alt="ADR Autoparts"
-              width={36}
-              height={36}
-              className="w-9 h-9 object-contain"
+              alt="ADR Auto Parts Trading"
+              width={40}
+              height={40}
+              className="w-9 h-9 lg:w-10 lg:h-10 object-contain"
               priority
             />
-            <span className="text-white font-bold text-lg hidden sm:block">
-              ADR Autoparts
-            </span>
+            <div className="hidden sm:block">
+              <span className="text-white font-bold text-lg leading-tight block">
+                ADR Auto Parts
+              </span>
+              <span className="text-[10px] text-gray-500 uppercase tracking-[0.2em] font-medium">
+                Trading
+              </span>
+            </div>
           </Link>
 
-          {/* Desktop Search Bar */}
-          <div ref={searchRef} className="relative hidden md:block flex-1 max-w-md mx-4">
-            <form onSubmit={handleSearchSubmit}>
-              <div
-                className={`relative flex items-center gap-2.5 px-3.5 py-2 rounded-xl border transition-all duration-300 cursor-text ${
-                  searchOpen
-                    ? "bg-[#1e1e28] border-[#3a3a45] shadow-lg shadow-black/10"
-                    : "bg-[#1e1e28]/60 border-[#2a2a35] hover:border-[#3a3a45]"
-                }`}
-                onClick={() => {
-                  setSearchOpen(true);
-                  searchInputRef.current?.focus();
-                }}
+          {/* Center — Services, Products, Maintenance */}
+          <div className="hidden lg:flex items-center gap-1">
+            {centerLinks.map((link) => (
+              <button
+                key={link.label}
+                onClick={() => scrollTo(link.href)}
+                className="px-4 py-2 text-sm font-medium text-gray-300 hover:text-white hover:bg-white/5 rounded-lg transition-all duration-200 cursor-pointer"
               >
-                <Search className={`w-4 h-4 shrink-0 transition-colors duration-200 ${searchOpen ? "text-red-400" : "text-gray-500"}`} />
-                <input
-                  ref={searchInputRef}
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onFocus={() => setSearchOpen(true)}
-                  placeholder={placeholders[placeholderIdx]}
-                  className="flex-1 bg-transparent text-sm text-white placeholder-gray-500 outline-none min-w-0"
-                />
-                {!searchOpen && (
-                  <kbd className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium text-gray-500 bg-[#252530] rounded border border-[#2a2a35]">
-                    /
-                  </kbd>
-                )}
-              </div>
-            </form>
-
-            {/* Search Dropdown */}
-            {searchOpen && (
-              <div className="absolute top-full left-0 right-0 mt-1.5 bg-[#16161d] border border-[#2a2a35] rounded-xl shadow-2xl shadow-black/30 overflow-hidden z-50">
-                <div className="px-3.5 py-2 border-b border-[#2a2a35]/60">
-                  <span className="text-[10px] font-medium text-gray-500 uppercase tracking-wider">
-                    {searchQuery ? "Results" : "Popular"}
-                  </span>
-                </div>
-                <div className="py-1 max-h-56 overflow-y-auto">
-                  {filtered.length > 0 ? filtered.map((item) => (
-                    <button
-                      key={item.label}
-                      onClick={() => handleSearchSelect(item.href)}
-                      className="w-full flex items-center justify-between px-3.5 py-2 hover:bg-[#1e1e28] transition-colors cursor-pointer"
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <Search className="w-3 h-3 text-gray-600" />
-                        <span className="text-sm text-gray-300">{item.label}</span>
-                      </div>
-                      <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${tagColors[item.tag] || ""}`}>
-                        {item.tag}
-                      </span>
-                    </button>
-                  )) : (
-                    <div className="px-3.5 py-5 text-center text-xs text-gray-500">
-                      No results for &ldquo;{searchQuery}&rdquo;
-                    </div>
-                  )}
-                </div>
-                <div className="px-3.5 py-1.5 border-t border-[#2a2a35]/60 flex items-center justify-between text-[10px] text-gray-600">
-                  <span>â†µ Search parts</span>
-                  <span>esc Close</span>
-                </div>
-              </div>
-            )}
+                {link.label}
+              </button>
+            ))}
           </div>
 
-          {/* Desktop Right Side */}
-          <div className="hidden md:flex items-center gap-3 shrink-0">
+          {/* Right — Actions + Theme + Auth */}
+          <div className="hidden lg:flex items-center gap-2">
+            {rightLinks.map((link) => (
+              <button
+                key={link.label}
+                onClick={() => scrollTo(link.href)}
+                className="px-3.5 py-1.5 text-sm font-medium text-gray-400 hover:text-white border border-transparent hover:border-[#2a2a35] rounded-lg transition-all duration-200 cursor-pointer"
+              >
+                {link.label}
+              </button>
+            ))}
+            <div className="w-px h-5 bg-[#2a2a35] mx-1" />
             <ThemeToggle />
-
             {isAuthenticated ? (
               <>
                 {userRole === "admin" && (
-                  <Link href="/admin" className="text-gray-400 hover:text-red-400 transition-colors text-sm">Dashboard</Link>
+                  <Link
+                    href="/admin"
+                    className="text-xs text-red-400 hover:text-red-300 transition-colors"
+                  >
+                    Dashboard
+                  </Link>
                 )}
                 {userRole === "staff" && (
-                  <Link href="/staff" className="text-gray-400 hover:text-blue-400 transition-colors text-sm">Staff Portal</Link>
+                  <Link
+                    href="/staff"
+                    className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                  >
+                    Staff
+                  </Link>
                 )}
                 {userRole === "user" && (
-                  <Link href="/user" className="text-gray-400 hover:text-emerald-400 transition-colors text-sm">My Account</Link>
+                  <Link
+                    href="/user"
+                    className="text-xs text-emerald-400 hover:text-emerald-300 transition-colors"
+                  >
+                    My Dashboard
+                  </Link>
                 )}
-                <div className="flex items-center gap-3 border-l border-[#2a2a35] pl-3">
-                  <div className="flex items-center gap-1.5">
-                    <User className="w-3.5 h-3.5 text-gray-500" />
-                    <span className="text-xs text-gray-400 capitalize">{userRole}</span>
-                  </div>
-                  <LogoutButton variant="secondary" size="sm" showIcon={true} />
-                </div>
+                <LogoutButton variant="secondary" size="sm" showIcon={true} />
               </>
             ) : (
-              <div className="flex items-center gap-3">
-                <a href="/auth/signin" className="text-gray-400 hover:text-white transition-colors text-sm">Sign In</a>
-                <a href="/auth/signup" className="px-4 py-1.5 bg-gradient-to-r from-red-500 to-red-600 text-white text-sm font-medium rounded-lg hover:from-red-600 hover:to-red-700 transition-all">
-                  Sign Up
-                </a>
-              </div>
+              <Link
+                href="/auth/signin"
+                className="inline-flex items-center gap-1.5 px-4 py-1.5 text-sm font-medium text-gray-300 hover:text-white border border-[#2a2a35] hover:border-[#3a3a45] rounded-lg transition-all duration-200"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                Sign In
+              </Link>
             )}
           </div>
 
-          {/* Mobile: theme + menu */}
-          <div className="flex md:hidden items-center gap-2">
+          {/* Mobile */}
+          <div className="flex lg:hidden items-center gap-2">
             <ThemeToggle />
-            <button className="p-2 text-gray-400 hover:text-white transition-colors cursor-pointer" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            <button
+              className="p-2 text-gray-400 hover:text-white transition-colors cursor-pointer"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            >
+              {mobileMenuOpen ? (
+                <X className="w-5 h-5" />
+              ) : (
+                <Menu className="w-5 h-5" />
+              )}
             </button>
           </div>
         </div>
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden pb-4 border-t border-[#2a2a35]">
-            {/* Mobile Search */}
-            <form
-              onSubmit={(e) => { e.preventDefault(); if (searchQuery.trim()) { router.push(`/parts?search=${encodeURIComponent(searchQuery.trim())}`); setSearchQuery(""); setMobileMenuOpen(false); }}}
-              className="px-4 py-3"
-            >
-              <div className="flex items-center gap-2.5 px-3 py-2.5 bg-[#1e1e28] border border-[#2a2a35] rounded-xl">
-                <Search className="w-4 h-4 text-gray-500" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search..."
-                  className="flex-1 bg-transparent text-sm text-white placeholder-gray-500 outline-none"
-                />
-              </div>
-            </form>
-
+          <div className="lg:hidden pb-6 pt-2 border-t border-[#2a2a35]/60 animate-fade-in">
+            <div className="space-y-1 mb-4">
+              <p className="px-3 pt-3 pb-1 text-[10px] uppercase tracking-widest text-gray-600 font-medium">
+                Navigate
+              </p>
+              {centerLinks.map((link) => (
+                <button
+                  key={link.label}
+                  onClick={() => scrollTo(link.href)}
+                  className="block w-full text-left px-3 py-2.5 text-sm text-gray-300 hover:text-white hover:bg-white/5 rounded-lg transition-all cursor-pointer"
+                >
+                  {link.label}
+                </button>
+              ))}
+            </div>
+            <div className="space-y-1 border-t border-[#2a2a35]/40 pt-3">
+              <p className="px-3 pt-1 pb-1 text-[10px] uppercase tracking-widest text-gray-600 font-medium">
+                Actions
+              </p>
+              {rightLinks.map((link) => (
+                <button
+                  key={link.label}
+                  onClick={() => scrollTo(link.href)}
+                  className="block w-full text-left px-3 py-2.5 text-sm text-gray-300 hover:text-white hover:bg-white/5 rounded-lg transition-all cursor-pointer"
+                >
+                  {link.label}
+                </button>
+              ))}
+            </div>
             {isAuthenticated ? (
-              <>
-                <div className="py-1.5 px-4 text-xs text-gray-500">{userEmail}</div>
-                <div className="py-1.5 px-4 capitalize text-xs text-gray-400">Role: {userRole}</div>
+              <div className="border-t border-[#2a2a35]/40 pt-3 mt-3 px-3">
                 {userRole === "admin" && (
-                  <Link href="/admin" className="block px-4 py-2 text-gray-400 hover:bg-[#1e1e28] transition-colors text-sm" onClick={() => setMobileMenuOpen(false)}>Admin Dashboard</Link>
+                  <Link
+                    href="/admin"
+                    className="block py-2 text-sm text-red-400"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Admin Dashboard
+                  </Link>
                 )}
                 {userRole === "staff" && (
-                  <Link href="/staff" className="block px-4 py-2 text-gray-400 hover:bg-[#1e1e28] transition-colors text-sm" onClick={() => setMobileMenuOpen(false)}>Staff Portal</Link>
+                  <Link
+                    href="/staff"
+                    className="block py-2 text-sm text-blue-400"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Staff Portal
+                  </Link>
                 )}
                 {userRole === "user" && (
-                  <>
-                    <Link href="/orders" className="block px-4 py-2 text-gray-400 hover:bg-[#1e1e28] transition-colors text-sm" onClick={() => setMobileMenuOpen(false)}>My Orders</Link>
-                    <Link href="/user" className="block px-4 py-2 text-gray-400 hover:bg-[#1e1e28] transition-colors text-sm" onClick={() => setMobileMenuOpen(false)}>My Account</Link>
-                  </>
+                  <Link
+                    href="/user"
+                    className="block py-2 text-sm text-emerald-400"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    My Dashboard
+                  </Link>
                 )}
-                <div className="px-4 py-2 border-t border-[#2a2a35] mt-2">
-                  <LogoutButton variant="danger" size="sm" className="w-full" />
-                </div>
-              </>
+                <LogoutButton
+                  variant="danger"
+                  size="sm"
+                  className="w-full mt-2"
+                />
+              </div>
             ) : (
-              <>
-                <a href="/auth/signin" className="block px-4 py-2 text-gray-400 hover:bg-[#1e1e28] transition-colors text-sm" onClick={() => setMobileMenuOpen(false)}>Sign In</a>
-                <a href="/auth/signup" className="block px-4 py-2 text-red-400 hover:bg-[#1e1e28] transition-colors text-sm" onClick={() => setMobileMenuOpen(false)}>Sign Up</a>
-              </>
+              <div className="border-t border-[#2a2a35]/40 pt-3 mt-3 px-3 flex gap-2">
+                <Link
+                  href="/auth/signin"
+                  className="flex-1 text-center py-2.5 text-sm font-medium text-white bg-white/5 border border-[#2a2a35] rounded-lg hover:bg-white/10 transition-all"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Sign In
+                </Link>
+                <Link
+                  href="/auth/signup"
+                  className="flex-1 text-center py-2.5 text-sm font-medium text-white bg-red-500/20 border border-red-500/30 rounded-lg hover:bg-red-500/30 transition-all"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Sign Up
+                </Link>
+              </div>
             )}
           </div>
         )}

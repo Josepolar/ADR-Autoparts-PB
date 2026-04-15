@@ -92,28 +92,20 @@ interface SeasonalPackage {
 
 const BRANCHES: Branch[] = [
   {
-    code: "MAKATI",
-    name: "ADR Makati Service Hub",
-    city: "Makati",
-    latitude: 14.5547,
-    longitude: 121.0244,
-    mapUrl: "https://maps.google.com/?q=14.5547,121.0244",
+    code: "BULACAN",
+    name: "ADR Santa Maria Branch",
+    city: "Santa Maria, Bulacan",
+    latitude: 14.8149,
+    longitude: 120.9567,
+    mapUrl: "https://maps.google.com/?q=14.8149,120.9567",
   },
   {
-    code: "QC",
-    name: "ADR Quezon City Branch",
-    city: "Quezon City",
-    latitude: 14.676,
-    longitude: 121.0437,
-    mapUrl: "https://maps.google.com/?q=14.676,121.0437",
-  },
-  {
-    code: "CEBU",
-    name: "ADR Cebu Service Center",
-    city: "Cebu",
-    latitude: 10.3157,
-    longitude: 123.8854,
-    mapUrl: "https://maps.google.com/?q=10.3157,123.8854",
+    code: "ANTIPOLO",
+    name: "ADR Antipolo Branch",
+    city: "Antipolo City, Rizal",
+    latitude: 14.5862,
+    longitude: 121.1761,
+    mapUrl: "https://maps.google.com/?q=14.5862,121.1761",
   },
 ];
 
@@ -343,19 +335,26 @@ export default function RapideClient() {
       const result = await getAvailableBays(serviceId, dateStr);
       if (result.success) {
         const rawBays: Bay[] = result.data || [];
-        const baysWithBranch: BayWithBranch[] = rawBays.map((bay) => ({
-          ...bay,
-          branchCode: selectedBranchCode,
-        }));
+
+        // Map bays to branches based on location field matching branch name
+        const baysWithBranch: BayWithBranch[] = rawBays.map((bay) => {
+          const matchedBranch = BRANCHES.find((b) => bay.location === b.name);
+          return {
+            ...bay,
+            branchCode: matchedBranch?.code || BRANCHES[0].code,
+          };
+        });
 
         setAvailableBays(baysWithBranch);
 
-        // All bays available at every branch (bays don't have branch FK in schema)
-        const totalCount = rawBays.length;
-        const availableCount = rawBays.filter((b) => b.isAvailable).length;
+        // Compute per-branch bay counts
         const nextStatuses: Record<string, { total: number; available: number }> = {};
         BRANCHES.forEach((branch) => {
-          nextStatuses[branch.code] = { total: totalCount, available: availableCount };
+          const branchBays = baysWithBranch.filter((b) => b.branchCode === branch.code);
+          nextStatuses[branch.code] = {
+            total: branchBays.length,
+            available: branchBays.filter((b) => b.isAvailable).length,
+          };
         });
         setBranchStatuses(nextStatuses);
       }

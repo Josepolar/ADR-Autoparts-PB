@@ -1,7 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getOrdersData, getAppointments } from "@/server/actions";
+import {
+  getOrdersData,
+  getAppointments,
+  getQuotations,
+  getBookings,
+  approveQuotation,
+  rejectQuotation,
+  updateBookingStatus,
+  getNotifications,
+  markNotificationRead,
+  markAllNotificationsRead,
+} from "@/server/actions";
 import {
   Spinner,
 } from "@/components/ui/modern-components";
@@ -20,6 +31,10 @@ import {
   Clock,
   Users,
   CheckCircle,
+  ClipboardList,
+  Check,
+  XCircle,
+  MessageSquare,
 } from "lucide-react";
 import Link from "next/link";
 import LogoutButton from "@/components/auth/logout-button";
@@ -28,6 +43,7 @@ import LogoutButton from "@/components/auth/logout-button";
 const sidebarItems = [
   { id: "overview", label: "Dashboard", icon: LayoutDashboard },
   { id: "bookings", label: "Bookings", icon: Calendar },
+  { id: "quotations", label: "Quotations", icon: ClipboardList },
   { id: "orders", label: "Orders", icon: ShoppingCart },
 ];
 
@@ -52,14 +68,26 @@ function StatusBadge({ status }: { status: string }) {
 export default function StaffDashboard() {
   const [orders, setOrders] = useState<any[]>([]);
   const [appointments, setAppointments] = useState<any[]>([]);
+  const [quotations, setQuotations] = useState<any[]>([]);
+  const [staffBookings, setStaffBookings] = useState<any[]>([]);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [showNotifications, setShowNotifications] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"overview" | "bookings" | "orders">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "bookings" | "quotations" | "orders">("overview");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [reviewModal, setReviewModal] = useState<{ id: string; type: "quotation" | "booking"; action: "approve" | "reject" | "confirm" | "cancel" } | null>(null);
+  const [reviewNotes, setReviewNotes] = useState("");
 
   useEffect(() => {
     loadData();
   }, [activeTab]);
+
+  useEffect(() => {
+    loadNotifications();
+    const interval = setInterval(loadNotifications, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     setMobileSidebarOpen(false);
@@ -73,11 +101,21 @@ export default function StaffDashboard() {
         if (result.success) {
           setAppointments(result.data || []);
         }
+        const bResult = await getBookings();
+        if (bResult.success) {
+          setStaffBookings(bResult.data || []);
+        }
       }
       if (activeTab === "overview" || activeTab === "orders") {
         const result = await getOrdersData();
         if (result.success) {
           setOrders(result.data || []);
+        }
+      }
+      if (activeTab === "quotations") {
+        const result = await getQuotations();
+        if (result.success) {
+          setQuotations(result.data || []);
         }
       }
     } catch (error) {
@@ -86,10 +124,65 @@ export default function StaffDashboard() {
     setLoading(false);
   }
 
+  async function loadNotifications() {
+    try {
+      const result = await getNotifications("MECHANIC");
+      if (result.success) {
+        setNotifications(result.data || []);
+      }
+    } catch (error) {
+      console.error("Error loading notifications:", error);
+    }
+  }
+
+  async function handleReviewSubmit() {
+    if (!reviewModal) return;
+    try {
+      if (reviewModal.type === "quotation") {
+        if (reviewModal.action === "approve") {
+          await approveQuotation(reviewModal.id, reviewNotes, "staff");
+        } else {
+          await rejectQuotation(reviewModal.id, reviewNotes, "staff");
+        }
+        const result = await getQuotations();
+        if (result.success) setQuotations(result.data || []);
+      } else {
+        const status = reviewModal.action === "confirm" ? "CONFIRMED" : "CANCELLED";
+        await updateBookingStatus(reviewModal.id, status, reviewNotes, "staff");
+        const result = await getBookings();
+        if (result.success) setStaffBookings(result.data || []);
+      }
+    } catch (error) {
+      console.error("Error processing review:", error);
+    }
+    setReviewModal(null);
+    setReviewNotes("");
+    loadNotifications();
+  }
+
+  async function handleMarkAllRead() {
+    await markAllNotificationsRead("MECHANIC");
+    loadNotifications();
+  }
+
+  async function handleNotificationClick(n: any) {
+    if (!n.isRead) {
+      await markNotificationRead(n.id);
+      loadNotifications();
+    }
+    if (n.type === "NEW_QUOTATION") setActiveTab("quotations");
+    else if (n.type === "NEW_BOOKING") setActiveTab("bookings");
+    else if (n.type === "NEW_ORDER") setActiveTab("orders");
+    setShowNotifications(false);
+  }
+
+  const unreadCount = notifications.filter((n: any) => !n.isRead).length;
+
   const getPageTitle = () => {
     switch (activeTab) {
       case "overview": return "Dashboard";
       case "bookings": return "Service Bookings";
+      case "quotations": return "Quotations";
       case "orders": return "Parts Orders";
     }
   };
@@ -217,12 +310,59 @@ export default function StaffDashboard() {
               />
             </div>
 
-            <button className="relative p-2 text-gray-400 hover:text-white hover:bg-[#1e1e28] rounded-xl transition-colors cursor-pointer">
-              <Bell className="w-5 h-5" />
-              {pendingBookings > 0 && (
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-blue-500 rounded-full" />
+            <div className="relative">
+              <button
+                onClick={() => setShowNotifications(!showNotifications)}
+                className="relative p-2 text-gray-400 hover:text-white hover:bg-[#1e1e28] rounded-xl transition-colors cursor-pointer"
+              >
+                <Bell className="w-5 h-5" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center bg-blue-500 text-white text-[10px] font-bold rounded-full px-1">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
+              </button>
+
+              {showNotifications && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setShowNotifications(false)} />
+                  <div className="absolute right-0 top-12 w-80 bg-[#16161d] border border-[#2a2a35] rounded-2xl shadow-2xl z-50 overflow-hidden">
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-[#2a2a35]">
+                      <h3 className="text-white font-semibold text-sm">Notifications</h3>
+                      {unreadCount > 0 && (
+                        <button onClick={handleMarkAllRead} className="text-xs text-blue-400 hover:text-blue-300 cursor-pointer">
+                          Mark all read
+                        </button>
+                      )}
+                    </div>
+                    <div className="max-h-80 overflow-y-auto">
+                      {notifications.length === 0 ? (
+                        <p className="text-gray-500 text-sm text-center py-8">No notifications</p>
+                      ) : (
+                        notifications.slice(0, 15).map((n: any) => (
+                          <button
+                            key={n.id}
+                            onClick={() => handleNotificationClick(n)}
+                            className={`w-full text-left px-4 py-3 border-b border-[#2a2a35]/50 hover:bg-[#1e1e28] transition-colors cursor-pointer ${!n.isRead ? "bg-blue-500/5" : ""}`}
+                          >
+                            <div className="flex items-start gap-2">
+                              {!n.isRead && <span className="w-2 h-2 rounded-full bg-blue-500 mt-1.5 shrink-0" />}
+                              <div className={!n.isRead ? "" : "pl-4"}>
+                                <p className="text-white text-sm font-medium">{n.title}</p>
+                                <p className="text-gray-500 text-xs mt-0.5 line-clamp-2">{n.message}</p>
+                                <p className="text-gray-600 text-[10px] mt-1">
+                                  {new Date(n.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                                </p>
+                              </div>
+                            </div>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </>
               )}
-            </button>
+            </div>
 
             <div className="flex items-center gap-2 pl-2 border-l border-[#2a2a35]">
               <div className="hidden sm:block text-right">
@@ -386,6 +526,66 @@ export default function StaffDashboard() {
               </div>
             </div>
           ) : activeTab === "bookings" ? (
+            <div className="space-y-5">
+            <div className="bg-[#16161d] border border-[#2a2a35] rounded-2xl p-5">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
+                <div>
+                  <h3 className="text-white font-semibold text-base flex items-center gap-2">
+                    <Calendar className="w-5 h-5 text-blue-400" />
+                    Customer Bookings
+                  </h3>
+                  <p className="text-gray-500 text-sm mt-0.5">{staffBookings.length} total bookings</p>
+                </div>
+              </div>
+
+              {staffBookings.length === 0 ? (
+                <div className="text-center py-12">
+                  <Calendar className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+                  <p className="text-gray-400 text-lg font-medium">No bookings</p>
+                  <p className="text-gray-600 text-sm mt-1">Bookings will appear here when customers submit them</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto -mx-5 px-5">
+                  <table className="w-full text-left text-sm min-w-[600px]">
+                    <thead>
+                      <tr className="border-b border-[#2a2a35]">
+                        <th className="text-gray-500 font-medium pb-3 text-xs uppercase tracking-wider">Customer</th>
+                        <th className="text-gray-500 font-medium pb-3 text-xs uppercase tracking-wider">Service</th>
+                        <th className="text-gray-500 font-medium pb-3 text-xs uppercase tracking-wider">Date</th>
+                        <th className="text-gray-500 font-medium pb-3 text-xs uppercase tracking-wider">Phone</th>
+                        <th className="text-gray-500 font-medium pb-3 text-xs uppercase tracking-wider">Status</th>
+                        <th className="text-gray-500 font-medium pb-3 text-xs uppercase tracking-wider">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {staffBookings.map((b: any) => (
+                        <tr key={b.id} className="border-b border-[#2a2a35]/50 hover:bg-[#1e1e28] transition-colors">
+                          <td className="py-3.5 text-white font-medium">{b.name}</td>
+                          <td className="py-3.5 text-gray-300 text-xs">{b.service}</td>
+                          <td className="py-3.5 text-gray-400 text-xs">{new Date(b.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</td>
+                          <td className="py-3.5 text-gray-400 text-xs">{b.phone}</td>
+                          <td className="py-3.5"><StatusBadge status={b.status} /></td>
+                          <td className="py-3.5">
+                            {b.status === "PENDING" ? (
+                              <div className="flex items-center gap-1.5">
+                                <button onClick={() => { setReviewModal({ id: b.id, type: "booking", action: "confirm" }); setReviewNotes(""); }} className="p-1.5 text-emerald-400 hover:bg-emerald-500/10 rounded-lg transition-colors cursor-pointer" title="Confirm"><Check className="w-4 h-4" /></button>
+                                <button onClick={() => { setReviewModal({ id: b.id, type: "booking", action: "cancel" }); setReviewNotes(""); }} className="p-1.5 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors cursor-pointer" title="Cancel"><XCircle className="w-4 h-4" /></button>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-1.5">
+                                <MessageSquare className="w-3.5 h-3.5 text-gray-500" />
+                                <span className="text-gray-500 text-xs truncate max-w-[120px]">{b.adminNotes || "—"}</span>
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
             <div className="bg-[#16161d] border border-[#2a2a35] rounded-2xl p-5">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
                 <div>
@@ -442,13 +642,87 @@ export default function StaffDashboard() {
                 </div>
               )}
             </div>
+            </div>
+          ) : activeTab === "quotations" ? (
+            <div className="bg-[#16161d] border border-[#2a2a35] rounded-2xl p-5">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
+                <div>
+                  <h3 className="text-white font-semibold text-base flex items-center gap-2">
+                    <ClipboardList className="w-5 h-5 text-blue-400" />
+                    Quotation Requests
+                  </h3>
+                  <p className="text-gray-500 text-sm mt-0.5">{quotations.length} total requests</p>
+                </div>
+              </div>
+
+              {quotations.length === 0 ? (
+                <div className="text-center py-12">
+                  <ClipboardList className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+                  <p className="text-gray-400 text-lg font-medium">No quotation requests</p>
+                  <p className="text-gray-600 text-sm mt-1">Quotation requests from customers will appear here</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto -mx-5 px-5">
+                  <table className="w-full text-left text-sm min-w-[700px]">
+                    <thead>
+                      <tr className="border-b border-[#2a2a35]">
+                        <th className="text-gray-500 font-medium pb-3 text-xs uppercase tracking-wider">Customer</th>
+                        <th className="text-gray-500 font-medium pb-3 text-xs uppercase tracking-wider">Email</th>
+                        <th className="text-gray-500 font-medium pb-3 text-xs uppercase tracking-wider">Items / Description</th>
+                        <th className="text-gray-500 font-medium pb-3 text-xs uppercase tracking-wider">Status</th>
+                        <th className="text-gray-500 font-medium pb-3 text-xs uppercase tracking-wider">Date</th>
+                        <th className="text-gray-500 font-medium pb-3 text-xs uppercase tracking-wider">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {quotations.map((q: any) => (
+                        <tr key={q.id} className="border-b border-[#2a2a35]/50 hover:bg-[#1e1e28] transition-colors">
+                          <td className="py-3.5 text-white font-medium">{q.name}</td>
+                          <td className="py-3.5 text-gray-400 text-xs">{q.email}</td>
+                          <td className="py-3.5 text-gray-300 text-xs max-w-[200px] truncate">{q.items}</td>
+                          <td className="py-3.5"><StatusBadge status={q.status} /></td>
+                          <td className="py-3.5 text-gray-500 text-xs">
+                            {new Date(q.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                          </td>
+                          <td className="py-3.5">
+                            {q.status === "PENDING" ? (
+                              <div className="flex items-center gap-1.5">
+                                <button
+                                  onClick={() => { setReviewModal({ id: q.id, type: "quotation", action: "approve" }); setReviewNotes(""); }}
+                                  className="p-1.5 text-emerald-400 hover:bg-emerald-500/10 rounded-lg transition-colors cursor-pointer"
+                                  title="Approve"
+                                >
+                                  <Check className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={() => { setReviewModal({ id: q.id, type: "quotation", action: "reject" }); setReviewNotes(""); }}
+                                  className="p-1.5 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors cursor-pointer"
+                                  title="Reject"
+                                >
+                                  <XCircle className="w-4 h-4" />
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-1.5">
+                                <MessageSquare className="w-3.5 h-3.5 text-gray-500" />
+                                <span className="text-gray-500 text-xs truncate max-w-[120px]">{q.adminNotes || "—"}</span>
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
           ) : (
             <div className="bg-[#16161d] border border-[#2a2a35] rounded-2xl p-5">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
                 <div>
                   <h3 className="text-white font-semibold text-base flex items-center gap-2">
                     <ShoppingCart className="w-5 h-5 text-blue-400" />
-                    Parts Orders
+                    Orders
                   </h3>
                   <p className="text-gray-500 text-sm mt-0.5">{orders.length} total orders</p>
                 </div>
@@ -497,6 +771,48 @@ export default function StaffDashboard() {
                   </table>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Review Modal */}
+          {reviewModal && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+              <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setReviewModal(null)} />
+              <div className="relative bg-[#16161d] border border-[#2a2a35] rounded-2xl w-full max-w-md p-6 shadow-2xl">
+                <h3 className="text-lg font-bold text-white mb-1 capitalize">
+                  {reviewModal.action} {reviewModal.type}
+                </h3>
+                <p className="text-gray-500 text-sm mb-5">
+                  {reviewModal.action === "approve" || reviewModal.action === "confirm"
+                    ? "Add notes for this approval (optional)."
+                    : "Provide a reason for this rejection."}
+                </p>
+                <textarea
+                  value={reviewNotes}
+                  onChange={(e) => setReviewNotes(e.target.value)}
+                  rows={3}
+                  placeholder="Add notes..."
+                  className="w-full px-4 py-3 bg-[#0f0f12] border border-[#2a2a35] rounded-xl text-white placeholder-gray-600 text-sm focus:outline-none focus:border-blue-500/40 resize-none mb-4"
+                />
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setReviewModal(null)}
+                    className="flex-1 py-2.5 bg-[#1e1e28] border border-[#2a2a35] text-gray-300 font-medium rounded-xl hover:bg-[#2a2a35] transition-colors cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleReviewSubmit}
+                    className={`flex-1 py-2.5 font-medium rounded-xl transition-colors cursor-pointer text-white ${
+                      reviewModal.action === "approve" || reviewModal.action === "confirm"
+                        ? "bg-emerald-600 hover:bg-emerald-700"
+                        : "bg-red-600 hover:bg-red-700"
+                    }`}
+                  >
+                    {reviewModal.action === "approve" ? "Approve" : reviewModal.action === "confirm" ? "Confirm" : reviewModal.action === "reject" ? "Reject" : "Cancel Booking"}
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </main>
