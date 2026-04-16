@@ -50,7 +50,8 @@ const config: Config = {
         },
       },
       fontFamily: {
-        sans: ["'Bebas Neue'", "'Squada One'", "sans-serif"],
+        sans: ["Inter", ...defaultTheme.fontFamily.sans],
+        display: ["'Bebas Neue'", "'Squada One'", "sans-serif"],
         mono: ["Fira Code", ...defaultTheme.fontFamily.mono],
       },
       backgroundColor: {

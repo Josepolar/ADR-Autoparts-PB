@@ -47,8 +47,8 @@ html.light {
 
 /* ============================================
    Light Mode Overrides
-   Map hardcoded dark tokens → CSS vars so every
-   existing page adapts automatically.
+   Comprehensive mapping of hardcoded dark tokens
+   → adaptive light values.
    ============================================ */
 
 html.light body {
@@ -56,34 +56,94 @@ html.light body {
   color: var(--adr-text) !important;
 }
 
-/* Background overrides */
-html.light .bg-\[\#0f0f12\] { background-color: var(--adr-bg-base) !important; }
-html.light .bg-\[\#0f0f12\]\/40 { background-color: color-mix(in srgb, var(--adr-bg-base) 40%, transparent) !important; }
-html.light .bg-\[\#0f0f12\]\/80 { background-color: color-mix(in srgb, var(--adr-bg-base) 80%, transparent) !important; }
-html.light .bg-\[\#16161d\] { background-color: var(--adr-bg-card) !important; }
-html.light .bg-\[\#16161d\]\/80 { background-color: color-mix(in srgb, var(--adr-bg-card) 80%, transparent) !important; }
-html.light .bg-\[\#16161d\]\/95 { background-color: color-mix(in srgb, var(--adr-bg-card) 95%, transparent) !important; }
-html.light .bg-\[\#1e1e28\] { background-color: var(--adr-bg-raised) !important; }
-html.light .bg-\[\#252530\] { background-color: var(--adr-bg-hover) !important; }
+/* ── Page / Section Backgrounds ── */
+html.light .bg-\[\#0a0a0f\]    { background-color: var(--adr-bg-base) !important; }
+html.light .bg-\[\#0a0a0f\]\/70 { background-color: rgba(245,245,247,0.85) !important; }
+html.light .bg-\[\#0a0a0f\]\/95 { background-color: rgba(245,245,247,0.97) !important; }
+html.light .bg-\[\#08080c\]    { background-color: #eaeaee !important; }
+html.light .bg-\[\#111118\]    { background-color: var(--adr-bg-card) !important; }
+html.light .bg-\[\#0f0f12\]    { background-color: var(--adr-bg-base) !important; }
+html.light .bg-\[\#16161d\]    { background-color: var(--adr-bg-card) !important; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+html.light .bg-\[\#1e1e28\]    { background-color: var(--adr-bg-raised) !important; }
+html.light .bg-\[\#252530\]    { background-color: var(--adr-bg-hover) !important; }
+html.light .bg-\[\#2a2a35\]    { background-color: var(--adr-border) !important; }
 
-/* Border overrides */
-html.light .border-\[\#2a2a35\] { border-color: var(--adr-border) !important; }
-html.light .border-\[\#3a3a45\] { border-color: var(--adr-border-hover) !important; }
-html.light .border-\[\#1a1a22\] { border-color: var(--adr-section-border) !important; }
+/* bg-black with opacity → subtle tints */
+html.light .bg-black\/30  { background-color: rgba(0,0,0,0.04) !important; }
+html.light .bg-black\/70  { background-color: rgba(0,0,0,0.45) !important; }
 
-/* Text overrides */
-html.light .text-white { color: var(--adr-text) !important; }
-html.light .text-gray-400 { color: var(--adr-text-secondary) !important; }
-html.light .text-gray-500 { color: var(--adr-text-muted) !important; }
-html.light .text-gray-600 { color: var(--adr-text-muted) !important; }
+/* bg-white/[low opacity] → visible card surfaces in light mode */
+html.light .bg-white\/\[0\.02\] { background-color: rgba(255,255,255,0.85) !important; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+html.light .bg-white\/\[0\.03\] { background-color: rgba(255,255,255,0.9) !important; }
+html.light .bg-white\/\[0\.04\] { background-color: rgba(0,0,0,0.03) !important; }
+html.light .bg-white\/\[0\.08\] { background-color: rgba(0,0,0,0.05) !important; }
+html.light .bg-white\/5         { background-color: rgba(0,0,0,0.04) !important; }
+html.light .bg-white\/10        { background-color: rgba(0,0,0,0.06) !important; }
+html.light .bg-white\/30        { background-color: rgba(0,0,0,0.15) !important; }
 
-/* Placeholder overrides */
+/* ── Border Overrides ── */
+html.light .border-white\/\[0\.04\]  { border-color: rgba(0,0,0,0.08) !important; }
+html.light .border-white\/\[0\.05\]  { border-color: rgba(0,0,0,0.10) !important; }
+html.light .border-white\/\[0\.06\]  { border-color: rgba(0,0,0,0.10) !important; }
+html.light .border-white\/\[0\.08\]  { border-color: rgba(0,0,0,0.12) !important; }
+html.light .border-white\/\[0\.15\]  { border-color: rgba(0,0,0,0.18) !important; }
+html.light .border-white\/10         { border-color: rgba(0,0,0,0.10) !important; }
+html.light .border-\[\#2a2a35\]      { border-color: var(--adr-border) !important; }
+html.light .border-\[\#2a2a35\]\/40  { border-color: rgba(224,224,228,0.6) !important; }
+html.light .border-\[\#3a3a45\]      { border-color: var(--adr-border-hover) !important; }
+html.light .border-\[\#1a1a22\]      { border-color: var(--adr-section-border) !important; }
+
+/* ── Divide colour (stats strip) ── */
+html.light .divide-white\/\[0\.06\] > :not([hidden]) ~ :not([hidden]) {
+  border-color: rgba(0,0,0,0.08) !important;
+}
+
+/* ── Text Overrides ── */
+html.light .text-white          { color: var(--adr-text) !important; }
+html.light .text-gray-300       { color: #333333 !important; }
+html.light .text-gray-400       { color: var(--adr-text-secondary) !important; }
+html.light .text-gray-500       { color: var(--adr-text-muted) !important; }
+html.light .text-gray-600       { color: #777777 !important; }
+/* Decorative watermarks / ultra-faint text */
+html.light .text-white\/\[0\.03\] { color: rgba(0,0,0,0.03) !important; }
+html.light .text-white\/\[0\.04\] { color: rgba(0,0,0,0.04) !important; }
+html.light .text-white\/\[0\.06\] { color: rgba(0,0,0,0.06) !important; }
+html.light .text-white\/\[0\.07\] { color: rgba(0,0,0,0.07) !important; }
+html.light .text-white\/10        { color: rgba(0,0,0,0.10) !important; }
+
+/* ── Hero Heading Gradient ── */
+html.light .bg-gradient-to-r.from-white { background-image: linear-gradient(to right, #111, #111, #444) !important; }
+
+/* ── Gradients containing hardcoded #0a0a0f ── */
+html.light .from-\[\#0a0a0f\]\/20 { --tw-gradient-from: rgba(245,245,247,0.2) !important; }
+html.light .via-\[\#0a0a0f\]\/60  { --tw-gradient-via: rgba(245,245,247,0.6) !important; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-via), var(--tw-gradient-to) !important; }
+html.light .to-\[\#0a0a0f\]       { --tw-gradient-to: #f5f5f7 !important; }
+html.light .from-\[\#0a0a0f\]     { --tw-gradient-from: #f5f5f7 !important; }
+html.light .from-white\/\[0\.03\]  { --tw-gradient-from: rgba(0,0,0,0.03) !important; }
+
+/* ── Placeholders ── */
 html.light .placeholder-gray-500::placeholder,
-html.light .placeholder-gray-600::placeholder {
+html.light .placeholder-gray-600::placeholder,
+html.light input::placeholder,
+html.light textarea::placeholder {
   color: var(--adr-text-muted) !important;
 }
 
-/* Scrollbar – light mode */
+/* ── Navbar Light Mode ── */
+html.light .backdrop-blur-xl  { backdrop-filter: blur(16px) !important; -webkit-backdrop-filter: blur(16px) !important; }
+html.light .backdrop-blur-2xl { backdrop-filter: blur(24px) !important; -webkit-backdrop-filter: blur(24px) !important; }
+html.light .backdrop-blur-sm  { backdrop-filter: blur(4px) !important; -webkit-backdrop-filter: blur(4px) !important; }
+html.light .backdrop-blur-lg  { backdrop-filter: blur(12px) !important; -webkit-backdrop-filter: blur(12px) !important; }
+
+/* Navbar shadow in light */
+html.light .shadow-lg.shadow-black\/30 {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06) !important;
+}
+html.light .shadow-black\/50 {
+  --tw-shadow-color: rgba(0,0,0,0.15) !important;
+}
+
+/* ── Scrollbar – light mode ── */
 html.light ::-webkit-scrollbar-track {
   background-color: #f0f0f2;
 }
@@ -94,22 +154,58 @@ html.light ::-webkit-scrollbar-thumb:hover {
   background-color: #a8a8b0;
 }
 
-/* Cards get a subtle shadow in light mode */
-html.light .bg-\[\#16161d\] {
-  box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+/* ── Premium Utilities – Light Variants ── */
+html.light .text-stroke {
+  -webkit-text-stroke-color: rgba(0, 0, 0, 0.10) !important;
+}
+html.light .text-stroke-red {
+  -webkit-text-stroke-color: rgba(239, 68, 68, 0.25) !important;
 }
 
-/* Gradient text stays visible in both modes */
-html.light .bg-gradient-to-r.from-red-400 { /* hero title gradient stays as-is */ }
-
-/* Navbar backdrop in light mode */
-html.light .supports-\[backdrop-filter\]\:bg-\[\#16161d\]\/80 {
-  background-color: rgba(255,255,255,0.85) !important;
+html.light .section-number {
+  -webkit-text-stroke-color: rgba(0, 0, 0, 0.04) !important;
 }
 
-/* Cover image slightly more visible in light mode */
-html.light .opacity-\[0\.07\] {
-  opacity: 0.04 !important;
+html.light .divider-line {
+  background: linear-gradient(90deg, transparent, rgba(0,0,0,0.08) 20%, rgba(0,0,0,0.08) 80%, transparent) !important;
+}
+
+html.light .grain-overlay {
+  display: none !important;
+}
+
+html.light .glow-border::before {
+  background: linear-gradient(135deg, transparent 40%, rgba(239, 68, 68, 0.2), transparent 60%) !important;
+}
+
+/* ── Cover image slightly more visible in light mode ── */
+html.light .opacity-\[0\.05\] {
+  opacity: 0.03 !important;
+}
+
+/* ── Selection ── */
+html.light ::selection {
+  background-color: rgba(239, 68, 68, 0.15) !important;
+  color: inherit !important;
+}
+
+/* ── Cards: subtle shadow treatment in light ── */
+html.light .hover\:bg-white\/\[0\.04\]:hover { background-color: rgba(0,0,0,0.04) !important; }
+html.light .hover\:bg-white\/\[0\.08\]:hover { background-color: rgba(0,0,0,0.06) !important; }
+html.light .hover\:bg-white\/5:hover         { background-color: rgba(0,0,0,0.05) !important; }
+html.light .hover\:bg-white\/10:hover        { background-color: rgba(0,0,0,0.07) !important; }
+html.light .hover\:border-white\/\[0\.15\]:hover { border-color: rgba(0,0,0,0.18) !important; }
+html.light .hover\:text-white:hover          { color: var(--adr-text) !important; }
+html.light .hover\:border-\[\#2a2a35\]:hover { border-color: var(--adr-border) !important; }
+html.light .hover\:border-\[\#3a3a45\]:hover { border-color: var(--adr-border-hover) !important; }
+
+/* ── Modal inputs in light mode ── */
+html.light input.border-white\/\[0\.08\],
+html.light textarea.border-white\/\[0\.08\],
+html.light select.border-white\/\[0\.08\] {
+  background-color: var(--adr-bg-input) !important;
+  border-color: var(--adr-border) !important;
+  color: var(--adr-text) !important;
 }
 
 @layer base {
@@ -331,4 +427,185 @@ html.light .opacity-\[0\.07\] {
 
 .animate-fade-in {
   animation: fadeIn 0.3s ease-out;
+}
+
+/* ============================================
+   Premium / GSAP-Grade Utilities
+   ============================================ */
+
+/* ── Film Grain Overlay (lightweight, desktop only via page.tsx) ── */
+.grain-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0.022;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 128px 128px;
+}
+
+/* ── Infinite Marquee ── */
+@keyframes marquee-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+.marquee-track {
+  animation: marquee-scroll 30s linear infinite;
+  will-change: transform;
+}
+
+.marquee-track:hover {
+  animation-play-state: paused;
+}
+
+/* ── Text Stroke / Outline ── */
+.text-stroke {
+  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.12);
+  color: transparent;
+}
+
+@media (min-width: 640px) {
+  .text-stroke {
+    -webkit-text-stroke: 2px rgba(255, 255, 255, 0.15);
+  }
+}
+
+.text-stroke-red {
+  -webkit-text-stroke: 2px rgba(239, 68, 68, 0.3);
+  color: transparent;
+}
+
+/* ── Clip Reveal ── */
+.clip-hidden {
+  clip-path: inset(0 100% 0 0);
+}
+
+/* ── Word overflow mask for text reveals ── */
+.word-mask {
+  overflow: hidden;
+  display: inline-block;
+}
+
+.word-mask > span {
+  display: inline-block;
+  transform: translateY(110%);
+}
+
+/* ── Magnetic button effect ── */
+.magnetic-btn {
+  transition: transform 0.3s cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* ── Premium divider line ── */
+.divider-line {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08) 20%, rgba(255,255,255,0.08) 80%, transparent);
+}
+
+/* ── Card 3D tilt base (desktop only for perf) ── */
+.tilt-card {
+  transition: box-shadow 0.4s ease;
+}
+
+@media (min-width: 1024px) {
+  .tilt-card {
+    transform-style: preserve-3d;
+    transition: transform 0.4s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.4s ease;
+  }
+}
+
+.tilt-card:hover {
+  box-shadow: 0 16px 40px -12px rgba(0, 0, 0, 0.4);
+}
+
+/* ── Section number label ── */
+.section-number {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(6rem, 12vw, 14rem);
+  line-height: 0.85;
+  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.04);
+  color: transparent;
+  position: absolute;
+  right: 0;
+  top: -2rem;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ── Smooth horizontal scroll panel ── */
+.h-panel {
+  flex-shrink: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+}
+
+/* ── Glow border on hover ── */
+.glow-border {
+  position: relative;
+}
+
+.glow-border::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, transparent 40%, rgba(239, 68, 68, 0.3), transparent 60%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.glow-border:hover::before {
+  opacity: 1;
+}
+
+/* ── Horizontal Scroll Progress ── */
+.scroll-progress {
+  height: 2px;
+  background: linear-gradient(90deg, #ef4444, #f59e0b);
+  transform-origin: left;
+  transform: scaleX(0);
+}
+
+/* ── Premium scrollbar ── */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0a0a0f;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1e1e28;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #2a2a35;
+}
+
+/* ── Selection styling ── */
+::selection {
+  background: rgba(239, 68, 68, 0.25);
+  color: #fff;
+}
+
+/* ── Smooth page ── */
+html {
+  scroll-behavior: auto !important; /* GSAP handles scrolling */
+}
+
+/* Light mode grain adjustment */
+html.light .grain-overlay {
+  opacity: 0.015;
+  mix-blend-mode: multiply;
 }

@@ -29,15 +29,15 @@ export default function RootLayout({
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="theme-color" content="#0f0f12" />
-        {/* Bold Display Fonts */}
-        <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Squada+One&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+        <meta name="theme-color" content="#0a0a0f" />
+        {/* Display + Body Fonts */}
+        <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Squada+One&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
         {/* Prevent browser caching of auth state */}
         <meta httpEquiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0" />
         <meta httpEquiv="Pragma" content="no-cache" />
         <meta httpEquiv="Expires" content="0" />
       </head>
-      <body className="bg-[#0f0f12] text-white transition-colors duration-300">
+      <body className="bg-[#0a0a0f] text-white transition-colors duration-300 antialiased">
         <ThemeProvider>
           <AuthProvider>
             <Navbar />

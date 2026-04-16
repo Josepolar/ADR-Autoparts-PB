@@ -54,14 +54,14 @@ export function Navbar() {
 
   return (
     <nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
         scrolled
-          ? "bg-[#0a0a0f]/95 backdrop-blur-xl border-b border-[#2a2a35]/60 shadow-lg shadow-black/20"
-          : "bg-transparent"
+          ? "bg-[#0a0a0f]/95 backdrop-blur-2xl border-b border-white/[0.06] shadow-lg shadow-black/30"
+          : "bg-[#0a0a0f]/70 backdrop-blur-xl"
       }`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 lg:h-20">
+      <div className="max-w-[90rem] mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-14 sm:h-16 lg:h-20">
           {/* Left — Brand */}
           <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
             <Image
@@ -73,10 +73,10 @@ export function Navbar() {
               priority
             />
             <div className="hidden sm:block">
-              <span className="text-white font-bold text-lg leading-tight block">
+              <span className="text-white font-semibold text-sm lg:text-lg leading-tight block">
                 ADR Auto Parts
               </span>
-              <span className="text-[10px] text-gray-500 uppercase tracking-[0.2em] font-medium">
+              <span className="text-[9px] lg:text-[10px] text-gray-500 uppercase tracking-[0.2em] font-medium">
                 Trading
               </span>
             </div>
@@ -165,7 +165,7 @@ export function Navbar() {
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="lg:hidden pb-6 pt-2 border-t border-[#2a2a35]/60 animate-fade-in">
+          <div className="lg:hidden pb-6 pt-2 border-t border-white/[0.06] bg-[#0a0a0f]/95 backdrop-blur-2xl animate-fade-in">
             <div className="space-y-1 mb-4">
               <p className="px-3 pt-3 pb-1 text-[10px] uppercase tracking-widest text-gray-600 font-medium">
                 Navigate
