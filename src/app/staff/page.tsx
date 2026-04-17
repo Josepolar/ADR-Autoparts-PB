@@ -35,9 +35,11 @@ import {
   Check,
   XCircle,
   MessageSquare,
+  Package,
 } from "lucide-react";
 import Link from "next/link";
 import LogoutButton from "@/components/auth/logout-button";
+import InventoryManagement from "@/components/admin/inventory-management";
 
 // Sidebar navigation items
 const sidebarItems = [
@@ -45,6 +47,7 @@ const sidebarItems = [
   { id: "bookings", label: "Bookings", icon: Calendar },
   { id: "quotations", label: "Quotations", icon: ClipboardList },
   { id: "orders", label: "Orders", icon: ShoppingCart },
+  { id: "inventory", label: "Inventory", icon: Package },
 ];
 
 // Status badge component
@@ -73,7 +76,7 @@ export default function StaffDashboard() {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"overview" | "bookings" | "quotations" | "orders">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "bookings" | "quotations" | "orders" | "inventory">("overview");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [reviewModal, setReviewModal] = useState<{ id: string; type: "quotation" | "booking"; action: "approve" | "reject" | "confirm" | "cancel" } | null>(null);
@@ -184,6 +187,7 @@ export default function StaffDashboard() {
       case "bookings": return "Service Bookings";
       case "quotations": return "Quotations";
       case "orders": return "Parts Orders";
+      case "inventory": return "Parts Inventory";
     }
   };
 
@@ -716,7 +720,7 @@ export default function StaffDashboard() {
                 </div>
               )}
             </div>
-          ) : (
+          ) : activeTab === "orders" ? (
             <div className="bg-[#16161d] border border-[#2a2a35] rounded-2xl p-5">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
                 <div>
@@ -772,7 +776,9 @@ export default function StaffDashboard() {
                 </div>
               )}
             </div>
-          )}
+          ) : activeTab === "inventory" ? (
+            <InventoryManagement />
+          ) : null}
 
           {/* Review Modal */}
           {reviewModal && (

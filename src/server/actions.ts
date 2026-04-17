@@ -72,6 +72,94 @@ export async function getImmoRequests() {
 // PARTS / E-COMMERCE ACTIONS
 // ============================================
 
+export async function createPart(data: {
+  name: string;
+  sku: string;
+  description?: string;
+  category: string;
+  costPrice: number;
+  retailPrice: number;
+  totalStock: number;
+  manufacturer?: string;
+  imageUrl?: string;
+}) {
+  try {
+    const part = await db.part.create({
+      data: {
+        name: data.name,
+        sku: data.sku,
+        description: data.description || null,
+        category: data.category as any,
+        costPrice: data.costPrice,
+        retailPrice: data.retailPrice,
+        totalStock: data.totalStock,
+        manufacturer: data.manufacturer || null,
+        imageUrl: data.imageUrl || null,
+      },
+    });
+    revalidatePath("/parts");
+    revalidatePath("/admin");
+    revalidatePath("/staff");
+    return { success: true, data: serialize(part) };
+  } catch (error) {
+    console.error("Error creating part:", error);
+    return { success: false, error: "Failed to create part" };
+  }
+}
+
+export async function updatePart(
+  id: string,
+  data: {
+    name?: string;
+    sku?: string;
+    description?: string;
+    category?: string;
+    costPrice?: number;
+    retailPrice?: number;
+    totalStock?: number;
+    manufacturer?: string;
+    imageUrl?: string | null;
+  }
+) {
+  try {
+    const updateData: Record<string, unknown> = {};
+    if (data.name !== undefined) updateData.name = data.name;
+    if (data.sku !== undefined) updateData.sku = data.sku;
+    if (data.description !== undefined) updateData.description = data.description || null;
+    if (data.category !== undefined) updateData.category = data.category;
+    if (data.costPrice !== undefined) updateData.costPrice = data.costPrice;
+    if (data.retailPrice !== undefined) updateData.retailPrice = data.retailPrice;
+    if (data.totalStock !== undefined) updateData.totalStock = data.totalStock;
+    if (data.manufacturer !== undefined) updateData.manufacturer = data.manufacturer || null;
+    if (data.imageUrl !== undefined) updateData.imageUrl = data.imageUrl;
+
+    const part = await db.part.update({
+      where: { id },
+      data: updateData,
+    });
+    revalidatePath("/parts");
+    revalidatePath("/admin");
+    revalidatePath("/staff");
+    return { success: true, data: serialize(part) };
+  } catch (error) {
+    console.error("Error updating part:", error);
+    return { success: false, error: "Failed to update part" };
+  }
+}
+
+export async function deletePart(id: string) {
+  try {
+    await db.part.delete({ where: { id } });
+    revalidatePath("/parts");
+    revalidatePath("/admin");
+    revalidatePath("/staff");
+    return { success: true };
+  } catch (error) {
+    console.error("Error deleting part:", error);
+    return { success: false, error: "Failed to delete part" };
+  }
+}
+
 export async function getParts(filters?: { category?: string; search?: string }) {
   try {
     const parts = await db.part.findMany({

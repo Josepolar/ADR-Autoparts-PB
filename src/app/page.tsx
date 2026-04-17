@@ -508,6 +508,14 @@ export default function Home() {
           service: data.service,
           date: data.date,
         };
+      } else if (activeModal === "request") {
+        endpoint = "/api/requests";
+        body = {
+          name: data.name,
+          email: data.email,
+          service: data.service,
+          message: data.message,
+        };
       } else {
         setFormSubmitted(true);
         setSubmitting(false);

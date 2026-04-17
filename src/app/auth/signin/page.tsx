@@ -121,7 +121,7 @@ export default function SignInPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#0f0f12] flex items-center justify-center px-4 py-12">
+    <main className="min-h-screen bg-[#0f0f12] flex items-center justify-center px-4 py-12 pt-20 sm:pt-24 lg:pt-28">
       {/* Background effects */}
       <div className="fixed inset-0 bg-gradient-to-br from-red-600/3 via-transparent to-blue-600/3 pointer-events-none" />
 

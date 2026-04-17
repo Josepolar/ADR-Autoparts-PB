@@ -17,6 +17,7 @@ interface Part {
   retailPrice: number | any;
   totalStock: number;
   manufacturer: string | null;
+  imageUrl?: string | null;
   variants?: any[];
 }
 
@@ -66,7 +67,7 @@ export default function PartsClient() {
   ];
 
   return (
-    <main className="min-h-screen bg-[#0f0f12]">
+    <main className="min-h-screen bg-[#0f0f12] pt-14 sm:pt-16 lg:pt-20">
       <section className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-10">
@@ -141,7 +142,17 @@ export default function PartsClient() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {parts.map((part) => (
-              <div key={part.id} className="bg-[#16161d] border border-[#2a2a35] rounded-2xl p-5 flex flex-col hover:border-[#3a3a45] transition-all duration-200">
+              <div key={part.id} className="bg-[#16161d] border border-[#2a2a35] rounded-2xl flex flex-col hover:border-[#3a3a45] transition-all duration-200 overflow-hidden">
+                {/* Product Image */}
+                <div className="w-full h-44 bg-[#1e1e28] flex items-center justify-center overflow-hidden">
+                  {part.imageUrl ? (
+                    <img src={part.imageUrl} alt={part.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <Package className="w-12 h-12 text-gray-700" />
+                  )}
+                </div>
+
+                <div className="p-5 flex flex-col flex-1">
                 <div className="mb-3">
                   <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-[#1e1e28] text-gray-400 border border-[#2a2a35]">
                     {part.category}
@@ -183,6 +194,7 @@ export default function PartsClient() {
                 >
                   {addedItem === part.id ? "✓ Added to Cart" : "Add to Cart"}
                 </button>
+                </div>
               </div>
             ))}
           </div>

@@ -50,7 +50,7 @@ export default function AutoECUClient() {
   );
 
   return (
-    <main className="min-h-screen bg-[#0f0f12]">
+    <main className="min-h-screen bg-[#0f0f12] pt-14 sm:pt-16 lg:pt-20">
       <section className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-10">

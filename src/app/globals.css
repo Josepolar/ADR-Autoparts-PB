@@ -561,6 +561,7 @@ html.light select.border-white\/\[0\.08\] {
   mask-composite: exclude;
   opacity: 0;
   transition: opacity 0.5s ease;
+  pointer-events: none;
 }
 
 .glow-border:hover::before {
