@@ -26,12 +26,10 @@ export default function OrderConfirmationPage() {
   useEffect(() => {
     const fetchOrder = async () => {
       try {
-        // In a real app, this would fetch from /api/orders/[id]
-        // For MVP, we'll use the order data from localStorage or API
-        const response = await fetch(`/api/orders?orderId=${orderId}`);
+        const response = await fetch(`/api/orders/${orderId}`);
         const result = await response.json();
-        if (result.data && result.data[0]) {
-          setOrder(result.data[0]);
+        if (result.success && result.data) {
+          setOrder(result.data);
         }
       } catch (error) {
         console.error("Error fetching order:", error);
@@ -130,7 +128,7 @@ export default function OrderConfirmationPage() {
                         </p>
                       </div>
                       <p className="font-bold text-cyber-blue-400">
-                        ₱{(item.totalPrice as any).toLocaleString()}
+                        ₱{Number(item.totalPrice ?? 0).toLocaleString()}
                       </p>
                     </div>
                   ))
@@ -211,7 +209,7 @@ export default function OrderConfirmationPage() {
                   <div className="flex justify-between items-center mb-6">
                     <span className="text-nardo-gray-400">Total</span>
                     <span className="text-2xl font-bold text-cyber-blue-400">
-                      ₱{(order?.totalAmount as any).toLocaleString()}
+                      ₱{Number(order?.totalAmount ?? 0).toLocaleString()}
                     </span>
                   </div>
 

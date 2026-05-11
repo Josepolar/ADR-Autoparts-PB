@@ -5,15 +5,25 @@ import { Decimal } from "@prisma/client/runtime/library";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { userId, items, totalAmount, billingAddress } = body;
+    const { email, items, totalAmount, billingAddress, paymentMethod } = body;
 
     // Validate required fields
-    if (!userId || !items || items.length === 0) {
+    if (!email || !items || items.length === 0) {
       return NextResponse.json(
         { success: false, message: "Missing required fields" },
         { status: 400 }
       );
     }
+
+    // Resolve userId from email (never trust client-sent IDs)
+    const user = await db.user.findUnique({ where: { email } });
+    if (!user) {
+      return NextResponse.json(
+        { success: false, message: "User not found. Please sign in again." },
+        { status: 401 }
+      );
+    }
+    const userId = user.id;
 
     // Generate order number
     const orderNumber = `ORD-${Date.now()}`;
@@ -51,12 +61,14 @@ export async function POST(request: NextRequest) {
     });
 
     // Create payment record (initially PENDING)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const resolvedMethod = (paymentMethod === "COD" ? "COD" : "XENDIT") as any;
     const payment = await db.payment.create({
       data: {
         userId,
         orderId: order.id,
         amount: new Decimal(totalAmount),
-        method: "BANK_TRANSFER", // Using BANK_TRANSFER to represent COD for MVP
+        method: resolvedMethod,
         status: "PENDING",
       },
     });

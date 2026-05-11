@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/context/cart-context";
-import { ArrowRight, MapPin, CreditCard, Loader2 } from "lucide-react";
+import { ArrowRight, MapPin, CreditCard, Loader2, Truck, Smartphone } from "lucide-react";
 import Link from "next/link";
 
 export default function CheckoutPage() {
@@ -11,6 +11,14 @@ export default function CheckoutPage() {
   const { items, totalPrice, clearCart } = useCart();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // Pre-fill email from session
+  useEffect(() => {
+    const storedEmail = sessionStorage.getItem("userEmail");
+    if (storedEmail) {
+      setFormData((prev) => ({ ...prev, email: storedEmail }));
+    }
+  }, []);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -22,7 +30,7 @@ export default function CheckoutPage() {
     city: "",
     province: "",
     zipCode: "",
-    paymentMethod: "COD",
+    paymentMethod: "XENDIT",
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -60,7 +68,7 @@ export default function CheckoutPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          userId: "test-user-1", // TODO: Replace with actual user ID from session
+          email: formData.email, // server will resolve userId from email
           items: items.map((item) => ({
             partId: item.partId,
             quantity: item.quantity,
@@ -68,6 +76,7 @@ export default function CheckoutPage() {
           })),
           totalAmount: finalTotal,
           billingAddress: formData,
+          paymentMethod: formData.paymentMethod,
         }),
       });
 
@@ -79,9 +88,33 @@ export default function CheckoutPage() {
         return;
       }
 
-      // Clear cart and redirect to confirmation page
+      const orderId: string = result.order.id;
+
+      if (formData.paymentMethod === "XENDIT") {
+        // Create Xendit invoice and redirect to hosted payment page
+        const xenditRes = await fetch("/api/payment/xendit/create", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ orderId, email: formData.email }),
+        });
+
+        const xenditData = await xenditRes.json();
+
+        if (!xenditData.success || !xenditData.invoiceUrl) {
+          setError(xenditData.message || "Failed to create payment link. Please try again.");
+          setLoading(false);
+          return;
+        }
+
+        clearCart();
+        // Redirect to Xendit hosted payment page
+        window.location.href = xenditData.invoiceUrl;
+        return;
+      }
+
+      // COD flow — go straight to confirmation
       clearCart();
-      router.push(`/orders/${result.order.id}?success=true`);
+      router.push(`/orders/${orderId}?success=true`);
     } catch (err) {
       setError("An error occurred. Please try again.");
       console.error(err);
@@ -226,24 +259,75 @@ export default function CheckoutPage() {
 
               {/* Payment Method */}
               <div className="bg-[#16161d] border border-[#2a2a35] rounded-2xl p-6 mb-4">
-                <h2 className="text-base font-bold text-white mb-4">Payment Method</h2>
-                <label className="flex items-center p-4 border border-amber-500/30 bg-amber-500/5 rounded-xl cursor-pointer transition-colors">
-                  <input
-                    type="radio"
-                    name="paymentMethod"
-                    value="COD"
-                    checked={formData.paymentMethod === "COD"}
-                    onChange={handleInputChange}
-                    className="w-4 h-4 accent-amber-500"
-                  />
-                  <div className="ml-3">
-                    <p className="font-semibold text-white text-sm">Cash on Delivery</p>
-                    <p className="text-xs text-gray-500">Pay when your order arrives</p>
+                <h2 className="text-base font-bold text-white mb-4 flex items-center gap-2">
+                  <CreditCard className="w-4 h-4 text-blue-400" />
+                  Payment Method
+                </h2>
+
+                <div className="grid sm:grid-cols-2 gap-3">
+                  {/* Xendit — Online Payment */}
+                  <label
+                    className={`flex items-start gap-3 p-4 border rounded-xl cursor-pointer transition-all ${
+                      formData.paymentMethod === "XENDIT"
+                        ? "border-red-500/50 bg-red-500/[0.05]"
+                        : "border-[#2a2a35] bg-[#1e1e28] hover:border-[#3a3a45]"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value="XENDIT"
+                      checked={formData.paymentMethod === "XENDIT"}
+                      onChange={handleInputChange}
+                      className="mt-0.5 w-4 h-4 accent-red-500"
+                    />
+                    <div>
+                      <p className="font-semibold text-white text-sm flex items-center gap-2">
+                        <Smartphone className="w-3.5 h-3.5 text-red-400" />
+                        Pay Online
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">GCash, Maya, Credit/Debit Card, OTC</p>
+                      <div className="flex gap-1.5 mt-2 flex-wrap">
+                        {["GCash", "Maya", "Visa/MC", "OTC"].map((m) => (
+                          <span key={m} className="text-[10px] px-1.5 py-0.5 bg-white/[0.06] border border-white/[0.08] rounded text-gray-400">
+                            {m}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </label>
+
+                  {/* Cash on Delivery */}
+                  <label
+                    className={`flex items-start gap-3 p-4 border rounded-xl cursor-pointer transition-all ${
+                      formData.paymentMethod === "COD"
+                        ? "border-amber-500/50 bg-amber-500/[0.05]"
+                        : "border-[#2a2a35] bg-[#1e1e28] hover:border-[#3a3a45]"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value="COD"
+                      checked={formData.paymentMethod === "COD"}
+                      onChange={handleInputChange}
+                      className="mt-0.5 w-4 h-4 accent-amber-500"
+                    />
+                    <div>
+                      <p className="font-semibold text-white text-sm flex items-center gap-2">
+                        <Truck className="w-3.5 h-3.5 text-amber-400" />
+                        Cash on Delivery
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">Pay when your order arrives</p>
+                    </div>
+                  </label>
+                </div>
+
+                {formData.paymentMethod === "XENDIT" && (
+                  <div className="mt-3 bg-blue-500/10 border border-blue-500/20 rounded-xl px-4 py-3 text-blue-300 text-xs">
+                    You&apos;ll be redirected to a secure Xendit payment page to complete your purchase.
                   </div>
-                </label>
-                <p className="text-xs text-gray-500 mt-3">
-                  More payment options coming soon (Credit Card, Bank Transfer, E-Wallet)
-                </p>
+                )}
               </div>
 
               {/* Order Items Review */}
@@ -280,7 +364,7 @@ export default function CheckoutPage() {
                   </>
                 ) : (
                   <>
-                    Place Order
+                    {formData.paymentMethod === "XENDIT" ? "Continue to Payment" : "Place Order"}
                     <ArrowRight className="w-4 h-4" />
                   </>
                 )}

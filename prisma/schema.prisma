@@ -392,6 +392,8 @@ enum PaymentMethod {
   GCASH
   MAYA
   BANK_TRANSFER
+  XENDIT
+  COD
 }
 
 model Payment {
@@ -410,6 +412,8 @@ model Payment {
   stripePaymentIntentId String?
   gcashReferenceId String?
   mayaReferenceId String?
+  xenditInvoiceId String?
+  xenditPaymentUrl String?
   
   currency      String     @default("PHP")
   
