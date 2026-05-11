@@ -10,9 +10,6 @@ import {
   approveQuotation,
   rejectQuotation,
   updateBookingStatus,
-  getNotifications,
-  markNotificationRead,
-  markAllNotificationsRead,
 } from "@/server/actions";
 import {
   Spinner,
@@ -146,7 +143,8 @@ export default function AdminDashboard() {
 
   async function loadNotifications() {
     try {
-      const result = await getNotifications("ADMIN");
+      const res = await fetch("/api/notifications?role=ADMIN");
+      const result = await res.json();
       if (result.success) {
         setNotifications(result.data || []);
       }
@@ -181,13 +179,21 @@ export default function AdminDashboard() {
   }
 
   async function handleMarkAllRead() {
-    await markAllNotificationsRead("ADMIN");
+    await fetch("/api/notifications", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ role: "ADMIN" }),
+    });
     loadNotifications();
   }
 
   async function handleNotificationClick(n: any) {
     if (!n.isRead) {
-      await markNotificationRead(n.id);
+      await fetch("/api/notifications", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ notificationId: n.id }),
+      });
       loadNotifications();
     }
     if (n.type === "NEW_QUOTATION") setActiveTab("quotations");

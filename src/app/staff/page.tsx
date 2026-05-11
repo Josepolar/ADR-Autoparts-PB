@@ -9,9 +9,6 @@ import {
   approveQuotation,
   rejectQuotation,
   updateBookingStatus,
-  getNotifications,
-  markNotificationRead,
-  markAllNotificationsRead,
 } from "@/server/actions";
 import {
   Spinner,
@@ -129,7 +126,8 @@ export default function StaffDashboard() {
 
   async function loadNotifications() {
     try {
-      const result = await getNotifications("MECHANIC");
+      const res = await fetch("/api/notifications?role=MECHANIC");
+      const result = await res.json();
       if (result.success) {
         setNotifications(result.data || []);
       }
@@ -164,13 +162,21 @@ export default function StaffDashboard() {
   }
 
   async function handleMarkAllRead() {
-    await markAllNotificationsRead("MECHANIC");
+    await fetch("/api/notifications", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ role: "MECHANIC" }),
+    });
     loadNotifications();
   }
 
   async function handleNotificationClick(n: any) {
     if (!n.isRead) {
-      await markNotificationRead(n.id);
+      await fetch("/api/notifications", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ notificationId: n.id }),
+      });
       loadNotifications();
     }
     if (n.type === "NEW_QUOTATION") setActiveTab("quotations");
