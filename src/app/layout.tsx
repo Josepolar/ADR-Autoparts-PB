@@ -40,10 +40,10 @@ export default function RootLayout({
       <body className="bg-[#0a0a0f] text-white transition-colors duration-300 antialiased">
         <ThemeProvider>
           <AuthProvider>
+          <CartProvider>
             <Navbar />
-            <CartProvider>
-              {children}
-            </CartProvider>
+            {children}
+          </CartProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>

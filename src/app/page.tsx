@@ -22,8 +22,6 @@ import {
   FileText,
   CalendarCheck,
   ClipboardList,
-  Zap,
-  Database,
   Settings,
   Droplets,
   Cog,
@@ -33,39 +31,14 @@ import {
   Timer,
   X,
   ArrowRight,
-  ArrowUpRight,
 } from "lucide-react";
+import { getParts } from "@/server/actions";
+import { useCart } from "@/context/cart-context";
 
 /* ══════════════════════════════════════════════
    DATA
    ══════════════════════════════════════════════ */
 
-const fileServices = [
-  {
-    title: "Immo Off",
-    desc: "Hyundai, Kia, Ford, Toyota, Honda, Lexus — professional immobilizer bypass and key coding solutions for modern vehicles.",
-    icon: Shield,
-    color: "red",
-  },
-  {
-    title: "Removals",
-    desc: "DPF, EGR, Airbag Crash Data, DTC Removal — clean, tested file modifications with guaranteed results.",
-    icon: Zap,
-    color: "amber",
-  },
-  {
-    title: "Tuning",
-    desc: "Stage 1, Stage 2 & Stage 3 ECU performance tuning. Unlock your engine's true potential safely.",
-    icon: Settings,
-    color: "blue",
-  },
-  {
-    title: "Database",
-    desc: "Instant access to our library of original ECU files. Download verified stock files on demand.",
-    icon: Database,
-    color: "emerald",
-  },
-];
 
 const productCategories = [
   { name: "Brakes", icon: Disc },
@@ -193,14 +166,15 @@ const heroStats = [
   { value: 4.9, suffix: "★", label: "Client Rating", decimal: true },
 ];
 
-/* ══════════════════════════════════════════════
-   COLOR MAP
-   ══════════════════════════════════════════════ */
-const colorMap: Record<string, { bg: string; text: string; border: string; glow: string }> = {
-  red: { bg: "bg-red-500/8", text: "text-red-400", border: "border-red-500/20", glow: "shadow-red-500/10" },
-  amber: { bg: "bg-amber-500/8", text: "text-amber-400", border: "border-amber-500/20", glow: "shadow-amber-500/10" },
-  blue: { bg: "bg-blue-500/8", text: "text-blue-400", border: "border-blue-500/20", glow: "shadow-blue-500/10" },
-  emerald: { bg: "bg-emerald-500/8", text: "text-emerald-400", border: "border-emerald-500/20", glow: "shadow-emerald-500/10" },
+
+const categoryValueMap: Record<string, string> = {
+  "Brakes": "BRAKES",
+  "Hoses": "HOSES",
+  "Genuine Oils": "ENGINE_OILS",
+  "ECU Units": "ECU_UNITS",
+  "Clock Springs": "CLOCK_SPRINGS",
+  "Timing Belts": "TIMING_BELTS",
+  "Injectors": "INJECTORS",
 };
 
 /* ══════════════════════════════════════════════
@@ -218,6 +192,9 @@ export default function Home() {
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const mainRef = useRef<HTMLElement>(null);
+  const [featuredParts, setFeaturedParts] = useState<any[]>([]);
+  const [featuredAdded, setFeaturedAdded] = useState<string | null>(null);
+  const { addItem } = useCart();
 
   /* ══ GSAP MASTER ANIMATIONS ══════════════════ */
   useEffect(() => {
@@ -466,6 +443,18 @@ export default function Home() {
     };
   }, []);
 
+  useEffect(() => {
+    async function loadFeatured() {
+      const result = await getParts({});
+      if (result.success && result.data) {
+        setFeaturedParts(
+          result.data.filter((p: any) => p.totalStock > 0).slice(0, 3)
+        );
+      }
+    }
+    loadFeatured();
+  }, []);
+
   /* ══ HANDLERS ══════════════════════════════════ */
   function openModal(modal: "request" | "book" | "quote") {
     setFormSubmitted(false);
@@ -543,9 +532,17 @@ export default function Home() {
     }
   }
 
-  function scrollTo(hash: string) {
-    const el = document.querySelector(hash);
-    if (el) el.scrollIntoView({ behavior: "smooth" });
+
+  function handleFeaturedAdd(part: any) {
+    addItem({
+      partId: part.id,
+      name: part.name,
+      sku: part.sku,
+      price: parseFloat(String(part.retailPrice)),
+      quantity: 1,
+    });
+    setFeaturedAdded(part.id);
+    setTimeout(() => setFeaturedAdded(null), 2000);
   }
 
   /* ══ RENDER ════════════════════════════════════ */
@@ -623,29 +620,21 @@ export default function Home() {
 
           {/* CTA Buttons */}
           <div data-hero-cta className="flex gap-3 sm:gap-4 mt-8 sm:mt-10 flex-wrap">
-            <button
-              onClick={() => scrollTo("#services")}
-              className="invisible group inline-flex items-center gap-2 px-5 sm:px-8 py-3 sm:py-4 bg-red-500 text-white text-sm sm:text-base font-semibold rounded-full hover:bg-red-600 transition-all duration-300 shadow-lg shadow-red-500/20 hover:shadow-red-500/30 hover:gap-3 cursor-pointer"
-            >
-              <Cpu className="w-4 h-4" />
-              Our Services
-              <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-0.5" />
-            </button>
             <Link
               href="/parts"
-              className="invisible inline-flex items-center gap-2 px-5 sm:px-8 py-3 sm:py-4 bg-white/[0.04] border border-white/[0.08] text-white text-sm sm:text-base font-semibold rounded-full hover:bg-white/[0.08] hover:border-white/[0.15] transition-all duration-300 backdrop-blur-sm"
+              className="invisible group inline-flex items-center gap-2 px-5 sm:px-8 py-3 sm:py-4 bg-red-500 text-white text-sm sm:text-base font-semibold rounded-full hover:bg-red-600 transition-all duration-300 shadow-lg shadow-red-500/20 hover:shadow-red-500/30 hover:gap-3"
             >
               <ShoppingBag className="w-4 h-4" />
               Shop Parts
+              <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-0.5" />
             </Link>
-            <button
-              onClick={() => scrollTo("#book-now")}
-              className="invisible hidden sm:inline-flex items-center gap-2 px-5 sm:px-8 py-3 sm:py-4 text-gray-300 text-sm sm:text-base font-medium hover:text-white transition-colors duration-300 cursor-pointer"
+            <Link
+              href="/rapide"
+              className="invisible inline-flex items-center gap-2 px-5 sm:px-8 py-3 sm:py-4 bg-white/[0.04] border border-white/[0.08] text-white text-sm sm:text-base font-semibold rounded-full hover:bg-white/[0.08] hover:border-white/[0.15] transition-all duration-300 backdrop-blur-sm"
             >
               <CalendarCheck className="w-4 h-4" />
-              Book Now
-              <ArrowUpRight className="w-3.5 h-3.5 opacity-50" />
-            </button>
+              Book a Service
+            </Link>
           </div>
         </div>
 
@@ -706,6 +695,106 @@ export default function Home() {
           )}
         </div>
       </div>
+
+      {/* ═══════════════════════════════════════════
+          FEATURED PRODUCTS
+          ═══════════════════════════════════════════ */}
+      {featuredParts.length > 0 && (
+        <section className="py-16 sm:py-20 lg:py-24 px-4 sm:px-6 lg:px-12 border-t border-white/[0.04]">
+          <div className="max-w-[90rem] mx-auto">
+            <div className="flex items-end justify-between mb-10 sm:mb-12">
+              <div data-reveal="up">
+                <span className="invisible text-red-400/70 text-[11px] uppercase tracking-[0.3em] font-medium">
+                  Featured
+                </span>
+                <h2 className="invisible text-3xl sm:text-4xl lg:text-5xl font-display text-white mt-2 leading-[0.95]">
+                  SHOP AUTO PARTS
+                </h2>
+              </div>
+              <Link
+                href="/parts"
+                data-reveal="right"
+                className="invisible hidden sm:inline-flex items-center gap-2 text-sm font-medium text-gray-400 hover:text-white hover:gap-3 transition-all duration-300"
+              >
+                View All Parts
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+            <div data-stagger className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {featuredParts.map((part) => (
+                <div
+                  key={part.id}
+                  className="invisible group bg-[#16161d] border border-[#2a2a35] rounded-3xl flex flex-col hover:border-[#3a3a45] hover:-translate-y-1 hover:shadow-2xl hover:shadow-black/40 transition-all duration-300 overflow-hidden"
+                >
+                  <div className="relative w-full h-56 bg-[#1a1a22] overflow-hidden">
+                    {part.imageUrl ? (
+                      <img
+                        src={part.imageUrl}
+                        alt={part.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <div className="w-16 h-16 rounded-2xl bg-white/[0.03] flex items-center justify-center">
+                          <ShoppingBag className="w-8 h-8 text-gray-700" />
+                        </div>
+                      </div>
+                    )}
+                    <div className="absolute top-3 left-3">
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-black/60 backdrop-blur-sm text-emerald-400 border border-emerald-500/20">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                        In Stock
+                      </span>
+                    </div>
+                  </div>
+                  <div className="p-5 flex flex-col flex-1">
+                    <h3 className="text-base font-semibold text-white mb-2 line-clamp-2 leading-snug">
+                      {part.name}
+                    </h3>
+                    {part.description && (
+                      <p className="text-sm text-gray-500 line-clamp-2 mb-4 flex-1 leading-relaxed">
+                        {part.description}
+                      </p>
+                    )}
+                    <div className="flex items-center justify-between pt-4 border-t border-[#2a2a35]">
+                      <p className="text-xl font-bold text-white">
+                        ₱{parseFloat(String(part.retailPrice)).toLocaleString()}
+                      </p>
+                      <button
+                        disabled={part.totalStock === 0}
+                        onClick={() => handleFeaturedAdd(part)}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${
+                          featuredAdded === part.id
+                            ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                            : "bg-red-500 text-white hover:bg-red-600 shadow-lg shadow-red-500/20"
+                        }`}
+                      >
+                        {featuredAdded === part.id ? (
+                          "✓ Added"
+                        ) : (
+                          <>
+                            <ShoppingBag className="w-3.5 h-3.5" />
+                            Add to Cart
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-center mt-8 sm:hidden">
+              <Link
+                href="/parts"
+                className="inline-flex items-center gap-2 text-sm font-medium text-red-400 hover:text-red-300 transition-colors"
+              >
+                View All Parts
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ═══════════════════════════════════════════
           ABOUT
@@ -823,119 +912,99 @@ export default function Home() {
       </section>
 
       {/* ═══════════════════════════════════════════
-          FILE SERVICES — Horizontal Scroll (desktop)
+          SERVICES — Apple-style stacked cards
           ═══════════════════════════════════════════ */}
-      <section className="border-t border-white/[0.04]">
-        {/* Desktop: horizontal scroll */}
-        <div
-          data-h-wrapper
-          className="hidden lg:block relative overflow-hidden"
-        >
-          <div
-            data-h-track
-            className="flex"
-            style={{ width: fileServices.length * 100 + "vw" }}
-          >
-            {fileServices.map((svc, i) => {
-              const c = colorMap[svc.color] || colorMap.red;
-              return (
-                <div
-                  key={svc.title}
-                  className="h-panel px-12 xl:px-20"
-                  id={i === 0 ? "services" : undefined}
-                >
-                  <div className="max-w-[90rem] mx-auto w-full grid grid-cols-12 gap-16 items-center">
-                    {/* Left content */}
-                    <div className="col-span-7">
-                      <span
-                        className={"text-[11px] uppercase tracking-[0.3em] font-medium " + c.text + " opacity-60"}
-                      >
-                        {String(i + 1).padStart(2, "0")} /{" "}
-                        {String(fileServices.length).padStart(2, "0")}
-                      </span>
-                      <h2 className="text-6xl xl:text-8xl font-display text-white mt-4 leading-[0.9]">
-                        {svc.title.toUpperCase()}
-                      </h2>
-                      <p className="text-gray-400 text-lg mt-6 max-w-lg leading-relaxed">
-                        {svc.desc}
-                      </p>
-                      <Link
-                        href="/autoecu"
-                        className={"group inline-flex items-center gap-2 mt-8 text-sm font-medium " + c.text + " hover:gap-3 transition-all duration-300"}
-                      >
-                        Explore Service
-                        <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
-                      </Link>
-                    </div>
-
-                    {/* Right icon */}
-                    <div className="col-span-5 flex items-center justify-center">
-                      <div
-                        className={"w-48 h-48 xl:w-56 xl:h-56 rounded-[2rem] " + c.bg + " border " + c.border + " flex items-center justify-center"}
-                      >
-                        <svc.icon
-                          className={"w-24 h-24 xl:w-28 xl:h-28 " + c.text + " opacity-30"}
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Large watermark number */}
-                  <span className="section-number">
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Mobile: vertical stack */}
-        <div className="lg:hidden py-20 px-6 sm:px-8" id="services">
-          <div data-reveal="up" className="invisible mb-12">
-            <span className="text-red-400/70 text-[11px] uppercase tracking-[0.3em] font-medium">
-              I. File Services
-            </span>
-            <h2 className="text-4xl font-display text-white mt-3">
-              ECU & SOFTWARE
-              <br />
-              SOLUTIONS
+      <section id="services" className="py-16 sm:py-24 lg:py-36 px-4 sm:px-6 lg:px-12 border-t border-white/[0.04]">
+        <div className="max-w-[90rem] mx-auto">
+          <div data-reveal="up" className="invisible mb-14 sm:mb-16">
+            <span className="text-red-400/70 text-[11px] uppercase tracking-[0.3em] font-medium">I. Services</span>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-display text-white mt-3 leading-[0.95]">
+              WHAT WE DO
             </h2>
           </div>
 
-          <div data-stagger className="space-y-4">
-            {fileServices.map((svc, i) => {
-              const c = colorMap[svc.color] || colorMap.red;
-              return (
-                <Link
-                  href="/autoecu"
-                  key={svc.title}
-                  className="invisible group flex items-center gap-5 p-5 bg-white/[0.02] border border-white/[0.05] rounded-2xl hover:bg-white/[0.04] hover:border-white/[0.1] transition-all duration-400"
-                >
-                  <div
-                    className={"w-14 h-14 rounded-xl " + c.bg + " flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-500"}
-                  >
-                    <svc.icon className={"w-7 h-7 " + c.text} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <span
-                      className={"text-[10px] uppercase tracking-[0.2em] " + c.text + " opacity-60"}
-                    >
-                      {String(i + 1).padStart(2, "0")}
+          <div data-stagger className="space-y-4 lg:space-y-5">
+            {/* AutoECU Portal */}
+            <Link
+              href="/autoecu"
+              className="invisible group flex flex-col lg:flex-row overflow-hidden border border-white/[0.05] hover:border-red-500/20 bg-[#16161d]/50 rounded-3xl transition-all duration-500 min-h-[260px] lg:min-h-[300px]"
+            >
+              <div className="relative lg:w-[42%] min-h-[180px] lg:min-h-0 bg-gradient-to-br from-red-950/80 via-[#1a0f0f] to-[#0f0a0a] flex items-center justify-center overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-red-500/[0.12] to-transparent" />
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-red-500/[0.06] rounded-full blur-3xl" />
+                <Cpu className="relative w-20 h-20 lg:w-28 lg:h-28 text-red-500/20 group-hover:text-red-500/30 transition-colors duration-500" />
+                <span className="absolute bottom-4 left-5 text-[10px] uppercase tracking-[0.3em] text-red-400/40 font-medium">01</span>
+              </div>
+              <div className="flex-1 p-8 lg:p-12 flex flex-col justify-center">
+                <span className="text-[11px] uppercase tracking-[0.3em] text-red-400/70 font-medium mb-3">ECU File Services</span>
+                <h3 className="text-2xl sm:text-3xl lg:text-4xl font-display text-white leading-[0.95] mb-4">
+                  AUTOECU PORTAL
+                </h3>
+                <p className="text-gray-400 text-[15px] leading-relaxed mb-6 max-w-lg">
+                  Browse tuned ECU firmware, download stock originals, or submit your ECU for custom Stage 1–3 performance tuning. Covering Hyundai, Kia, Ford, Toyota & more.
+                </p>
+                <div className="flex items-center gap-2 text-red-400 text-sm font-medium group-hover:gap-3 transition-all duration-300">
+                  Explore Portal
+                  <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+                </div>
+              </div>
+            </Link>
+
+            {/* Rapide Auto Care */}
+            <Link
+              href="/rapide"
+              className="invisible group flex flex-col lg:flex-row-reverse overflow-hidden border border-white/[0.05] hover:border-amber-500/20 bg-[#16161d]/50 rounded-3xl transition-all duration-500 min-h-[260px] lg:min-h-[300px]"
+            >
+              <div className="relative lg:w-[42%] min-h-[180px] lg:min-h-0 bg-gradient-to-br from-amber-950/80 via-[#1a1408] to-[#0f0d08] flex items-center justify-center overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-amber-500/[0.10] to-transparent" />
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-amber-500/[0.06] rounded-full blur-3xl" />
+                <Wrench className="relative w-20 h-20 lg:w-28 lg:h-28 text-amber-500/20 group-hover:text-amber-500/30 transition-colors duration-500" />
+                <span className="absolute bottom-4 right-5 text-[10px] uppercase tracking-[0.3em] text-amber-400/40 font-medium">02</span>
+              </div>
+              <div className="flex-1 p-8 lg:p-12 flex flex-col justify-center">
+                <span className="text-[11px] uppercase tracking-[0.3em] text-amber-400/70 font-medium mb-3">Vehicle Maintenance</span>
+                <h3 className="text-2xl sm:text-3xl lg:text-4xl font-display text-white leading-[0.95] mb-4">
+                  RAPIDE AUTO CARE
+                </h3>
+                <p className="text-gray-400 text-[15px] leading-relaxed mb-4 max-w-lg">
+                  Book a service appointment at our Santa Maria or Antipolo branch. Oil change, diagnostics, brake service, ECU tuning, and more — by certified mechanics.
+                </p>
+                <div className="flex flex-wrap gap-2 mb-6">
+                  {["Oil Change ₱1,500", "Diagnostics ₱2,500", "ECU Tuning ₱8,000", "Brakes ₱3,500"].map((s) => (
+                    <span key={s} className="text-xs px-2.5 py-1 rounded-full bg-amber-500/[0.08] text-amber-400/70 border border-amber-500/10">
+                      {s}
                     </span>
-                    <h3 className="text-white font-semibold text-lg">
-                      {svc.title}
-                    </h3>
-                    <p className="text-gray-500 text-sm truncate">
-                      {svc.desc}
-                    </p>
-                  </div>
-                  <ArrowRight
-                    className={"w-5 h-5 " + c.text + " opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex-shrink-0"}
-                  />
-                </Link>
-              );
-            })}
+                  ))}
+                </div>
+                <div className="flex items-center gap-2 text-amber-400 text-sm font-medium group-hover:gap-3 transition-all duration-300">
+                  Book Appointment
+                  <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+                </div>
+              </div>
+            </Link>
+
+            {/* Mechanic On-Site — Coming Soon */}
+            <div className="invisible group flex flex-col lg:flex-row overflow-hidden border border-white/[0.04] bg-[#16161d]/30 rounded-3xl transition-all duration-500 min-h-[200px] opacity-60 cursor-not-allowed">
+              <div className="relative lg:w-[42%] min-h-[140px] lg:min-h-0 bg-gradient-to-br from-blue-950/60 via-[#0a0e1a] to-[#080a0f] flex items-center justify-center overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/[0.07] to-transparent" />
+                <Cog className="relative w-20 h-20 lg:w-28 lg:h-28 text-blue-500/15" />
+                <span className="absolute bottom-4 left-5 text-[10px] uppercase tracking-[0.3em] text-blue-400/30 font-medium">03</span>
+              </div>
+              <div className="flex-1 p-8 lg:p-12 flex flex-col justify-center">
+                <div className="flex items-center gap-3 mb-3">
+                  <span className="text-[11px] uppercase tracking-[0.3em] text-blue-400/50 font-medium">Mobile Service</span>
+                  <span className="text-[10px] uppercase tracking-wider bg-blue-500/10 text-blue-400 px-2.5 py-1 rounded-full font-medium border border-blue-500/10">
+                    Coming Soon
+                  </span>
+                </div>
+                <h3 className="text-2xl sm:text-3xl lg:text-4xl font-display text-white leading-[0.95] mb-4">
+                  MECHANIC ON-SITE
+                </h3>
+                <p className="text-gray-500 text-[15px] leading-relaxed max-w-lg">
+                  We&apos;re bringing our certified mechanics directly to your location. Mobile vehicle service and repair, launching soon.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -978,7 +1047,7 @@ export default function Home() {
           >
             {productCategories.map((cat) => (
               <Link
-                href="/parts"
+                href={`/parts?category=${categoryValueMap[cat.name] || "all"}`}
                 key={cat.name}
                 className="invisible group relative flex flex-col items-center justify-center gap-3 p-6 lg:p-8 bg-white/[0.02] border border-white/[0.05] rounded-2xl hover:bg-blue-500/[0.04] hover:border-blue-500/15 transition-all duration-500 cursor-pointer overflow-hidden"
               >
@@ -1285,10 +1354,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ═══════════════════════════════════════════
-          BLOG
-          ═══════════════════════════════════════════ */}
-      <section
+      {/* Blog section removed — no published posts yet */}
+      {false && <section
         id="blog"
         className="py-16 sm:py-24 lg:py-36 px-4 sm:px-6 lg:px-12 border-t border-white/[0.04]"
       >
@@ -1341,11 +1408,7 @@ export default function Home() {
             ))}
           </div>
         </div>
-      </section>
-
-      {/* ═══════════════════════════════════════════
-          FOOTER
-          ═══════════════════════════════════════════ */}
+      </section>}
       <footer
         data-footer
         className="invisible border-t border-white/[0.04] pt-12 sm:pt-16 lg:pt-20 pb-8 sm:pb-10 px-4 sm:px-6 lg:px-12"

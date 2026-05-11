@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { getFirmwareFiles } from "@/server/actions";
 import { Spinner } from "@/components/ui/modern-components";
-import { Download, Upload, CheckCircle, Cpu } from "lucide-react";
+import { Download, Upload, CheckCircle, Cpu, Home, ChevronRight } from "lucide-react";
 import Link from "next/link";
 
 interface FirmwareFile {
@@ -31,6 +31,7 @@ export default function AutoECUClient() {
   const [firmware, setFirmware] = useState<FirmwareFile[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "STOCK" | "TUNED">("all");
+  const [makeFilter, setMakeFilter] = useState<string>("all");
 
   useEffect(() => {
     loadFirmware();
@@ -46,52 +47,85 @@ export default function AutoECUClient() {
   }
 
   const filteredFirmware = firmware.filter(
-    (f) => filter === "all" || f.status === filter
+    (f) =>
+      (filter === "all" || f.status === filter) &&
+      (makeFilter === "all" || f.ecu?.vehicle?.make?.toLowerCase() === makeFilter)
   );
 
+  const availableMakes = Array.from(
+    new Set(firmware.map((f) => f.ecu?.vehicle?.make).filter(Boolean))
+  ) as string[];
+
   return (
-    <main className="min-h-screen bg-[#0f0f12] pt-14 sm:pt-16 lg:pt-20">
-      <section className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-10">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center">
-              <Cpu className="w-5 h-5 text-red-400" />
+    <main className="min-h-screen bg-[#0a0a0f] pt-14 sm:pt-16 lg:pt-20">
+      {/* Hero Banner */}
+      <div className="relative overflow-hidden border-b border-white/[0.04]">
+        <div className="absolute inset-0 bg-gradient-to-br from-red-950/60 via-[#0f0a0a] to-[#0a0a0f]" />
+        <div className="absolute inset-0 bg-gradient-to-r from-red-500/[0.06] to-transparent" />
+        <div className="absolute top-0 right-0 w-[600px] h-[400px] bg-red-500/[0.04] rounded-full blur-3xl" />
+        <div className="relative max-w-[90rem] mx-auto px-4 sm:px-6 lg:px-12 py-14 lg:py-20">
+          <nav className="flex items-center gap-1.5 text-xs text-gray-600 mb-6">
+            <Link href="/" className="hover:text-gray-400 transition-colors flex items-center gap-1">
+              <Home className="w-3 h-3" /> Home
+            </Link>
+            <ChevronRight className="w-3 h-3" />
+            <span className="text-gray-400">AutoECU Portal</span>
+          </nav>
+          <div className="flex items-start gap-6">
+            <div className="w-16 h-16 lg:w-20 lg:h-20 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center shrink-0">
+              <Cpu className="w-8 h-8 lg:w-10 lg:h-10 text-red-400" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-white">AutoECU Portal</h1>
-              <p className="text-gray-500 text-sm">
-                Browse tuned ECU firmware, upload for custom modifications, and download optimized files.
+              <span className="text-[11px] uppercase tracking-[0.3em] text-red-400/70 font-medium">ECU File Services</span>
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-display text-white mt-1 leading-[0.95]">
+                AUTOECU PORTAL
+              </h1>
+              <p className="text-gray-400 text-sm sm:text-base mt-3 max-w-xl leading-relaxed">
+                Browse tuned ECU firmware, download stock originals, or submit your ECU for custom Stage 1–3 performance tuning.
               </p>
             </div>
           </div>
-
-          {/* Info banner */}
-          <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl px-4 py-3 text-blue-400 text-sm flex items-start gap-2">
+          <div className="mt-6 bg-blue-500/10 border border-blue-500/20 rounded-xl px-4 py-3 text-blue-400 text-sm flex items-start gap-2 max-w-xl">
             <span className="shrink-0 mt-0.5">📦</span>
-            All firmware files are encrypted. Download includes 24-hour secure access via signed URLs.
+            All firmware files are encrypted. Downloads include 24-hour secure access via signed URLs.
           </div>
         </div>
+      </div>
 
-        {/* Filter Tabs */}
-        <div className="flex gap-2 mb-8">
-          {[
-            { value: "all", label: "All Files" },
-            { value: "STOCK", label: "Original" },
-            { value: "TUNED", label: "Stage 1 Tuned" },
-          ].map((f) => (
-            <button
-              key={f.value}
-              onClick={() => setFilter(f.value as "all" | "STOCK" | "TUNED")}
-              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer ${
-                filter === f.value
-                  ? "bg-red-500/10 text-red-400 border border-red-500/20"
-                  : "bg-[#16161d] border border-[#2a2a35] text-gray-400 hover:text-gray-200 hover:bg-[#1e1e28]"
-              }`}
+      <section className="py-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        {/* Filters */}
+        <div className="flex flex-wrap gap-2 mb-8">
+          <div className="flex gap-2">
+            {[
+              { value: "all", label: "All Files" },
+              { value: "STOCK", label: "Original" },
+              { value: "TUNED", label: "Stage 1 Tuned" },
+            ].map((f) => (
+              <button
+                key={f.value}
+                onClick={() => setFilter(f.value as "all" | "STOCK" | "TUNED")}
+                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer ${
+                  filter === f.value
+                    ? "bg-red-500/10 text-red-400 border border-red-500/20"
+                    : "bg-[#16161d] border border-[#2a2a35] text-gray-400 hover:text-gray-200 hover:bg-[#1e1e28]"
+                }`}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+          {availableMakes.length > 0 && (
+            <select
+              value={makeFilter}
+              onChange={(e) => setMakeFilter(e.target.value)}
+              className="px-4 py-2 bg-[#16161d] border border-[#2a2a35] rounded-xl text-gray-300 focus:outline-none text-sm cursor-pointer ml-auto"
             >
-              {f.label}
-            </button>
-          ))}
+              <option value="all" className="bg-[#16161d]">All Makes</option>
+              {availableMakes.map((make) => (
+                <option key={make} value={make.toLowerCase()} className="bg-[#16161d]">{make}</option>
+              ))}
+            </select>
+          )}
         </div>
 
         {/* Firmware Grid */}
@@ -109,42 +143,49 @@ export default function AutoECUClient() {
             <p className="text-gray-600 text-sm mt-1">Check back later or upload your own ECU file</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {filteredFirmware.map((file) => (
-              <div key={file.id} className="bg-[#16161d] border border-[#2a2a35] rounded-2xl p-5 hover:border-[#3a3a45] transition-all duration-200 flex flex-col">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className={`w-5 h-5 ${file.status === "TUNED" ? "text-emerald-400" : "text-gray-500"}`} />
+              <div key={file.id} className="group bg-[#16161d] border border-[#2a2a35] rounded-3xl hover:border-[#3a3a45] hover:-translate-y-1 hover:shadow-2xl hover:shadow-black/40 transition-all duration-300 overflow-hidden flex flex-col">
+                {/* Card header gradient */}
+                <div className="h-40 bg-gradient-to-br from-red-950/60 via-[#1a0f0f] to-[#16161d] flex items-center justify-center relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-red-500/[0.08] to-transparent" />
+                  <Cpu className="relative w-16 h-16 text-red-500/20 group-hover:text-red-500/30 transition-colors duration-500" />
+                  <div className="absolute top-3 right-3">
+                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
+                      file.status === "TUNED" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" : "bg-blue-500/10 text-blue-400 border border-blue-500/20"
+                    }`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${file.status === "TUNED" ? "bg-emerald-400" : "bg-blue-400"}`} />
+                      {file.status === "STOCK" ? "Original" : "Stage 1"}
+                    </span>
                   </div>
-                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
-                    file.status === "TUNED" ? "bg-emerald-500/10 text-emerald-400" : "bg-blue-500/10 text-blue-400"
-                  }`}>
-                    <span className={`w-1.5 h-1.5 rounded-full ${file.status === "TUNED" ? "bg-emerald-400" : "bg-blue-400"}`} />
-                    {file.status === "STOCK" ? "Original" : "Stage 1"}
-                  </span>
                 </div>
 
-                <h3 className="text-base font-bold text-white mb-2">{file.fileName}</h3>
+                <div className="p-5 flex flex-col flex-1">
+                  <h3 className="text-base font-semibold text-white mb-2 leading-snug">{file.fileName}</h3>
 
-                {file.ecu?.vehicle && (
-                  <p className="text-xs text-gray-400 mb-3">
-                    <strong className="text-gray-300">{file.ecu.vehicle.year}</strong> {file.ecu.vehicle.make} {file.ecu.vehicle.model}
-                  </p>
-                )}
+                  {file.ecu?.vehicle && (
+                    <p className="text-xs text-gray-400 mb-2">
+                      <span className="font-medium text-gray-300">{file.ecu.vehicle.year}</span>{" "}
+                      {file.ecu.vehicle.make} {file.ecu.vehicle.model}
+                    </p>
+                  )}
 
-                <p className="text-gray-500 text-sm mb-4 flex-1 line-clamp-2">{file.description}</p>
+                  {file.description && (
+                    <p className="text-gray-500 text-sm mb-4 flex-1 line-clamp-2 leading-relaxed">{file.description}</p>
+                  )}
 
-                <div className="flex items-center justify-between mb-4 pt-4 border-t border-[#2a2a35]">
-                  <span className="text-xl font-bold text-red-400">₱{file.price.toLocaleString()}</span>
-                  <span className="text-xs text-gray-500 bg-[#1e1e28] px-2 py-1 rounded-lg">
-                    {file.version}
-                  </span>
+                  <div className="flex items-center justify-between pt-4 border-t border-[#2a2a35]">
+                    <span className="text-2xl font-bold text-white">₱{parseFloat(String(file.price)).toLocaleString()}</span>
+                    <span className="text-xs text-gray-500 bg-[#1e1e28] px-2 py-1 rounded-lg border border-[#2a2a35]">
+                      {file.version}
+                    </span>
+                  </div>
+
+                  <button className="w-full mt-4 py-2.5 bg-red-500 text-white font-medium rounded-xl hover:bg-red-600 transition-all duration-200 text-sm flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-red-500/20">
+                    <Download className="w-4 h-4" />
+                    Download
+                  </button>
                 </div>
-
-                <button className="w-full py-2.5 bg-gradient-to-r from-red-500 to-red-600 text-white font-medium rounded-xl hover:from-red-600 hover:to-red-700 transition-all duration-200 text-sm flex items-center justify-center gap-2 cursor-pointer">
-                  <Download className="w-4 h-4" />
-                  Download
-                </button>
               </div>
             ))}
           </div>

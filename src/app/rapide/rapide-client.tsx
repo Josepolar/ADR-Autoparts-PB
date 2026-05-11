@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { getServices, getAvailableBays, createAppointment } from "@/server/actions";
-import { Calendar, Clock, MapPin, CheckCircle, Loader2, TriangleAlert, Smartphone, House, X, AlertCircle, Info } from "lucide-react";
+import { Calendar, Clock, MapPin, CheckCircle, Loader2, TriangleAlert, Smartphone, House, X, AlertCircle, Info, Wrench } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 
 type ToastType = "error" | "warning" | "info" | "success";
@@ -513,25 +513,36 @@ export default function RapideClient() {
   }
 
   return (
-    <main className="min-h-screen bg-[#0f0f12]">
+    <main className="min-h-screen bg-[#0a0a0f]">
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
-      <section className="pt-24 sm:pt-28 lg:pt-32 pb-12 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-10">
-          <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center">
-            <Clock className="w-5 h-5 text-amber-400" />
+
+      {/* Hero Banner */}
+      <div className="relative overflow-hidden border-b border-white/[0.04] pt-14 sm:pt-16 lg:pt-20">
+        <div className="absolute inset-0 bg-gradient-to-br from-amber-950/50 via-[#100f00] to-[#0a0a0f]" />
+        <div className="absolute inset-0 bg-gradient-to-r from-amber-500/[0.05] to-transparent" />
+        <div className="absolute top-0 right-0 w-[600px] h-[400px] bg-amber-500/[0.03] rounded-full blur-3xl" />
+        <div className="relative max-w-[90rem] mx-auto px-4 sm:px-6 lg:px-12 py-12 lg:py-16">
+          <div className="flex items-start gap-6">
+            <div className="w-14 h-14 lg:w-18 lg:h-18 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
+              <Clock className="w-7 h-7 text-amber-400" />
+            </div>
+            <div>
+              <span className="text-[11px] uppercase tracking-[0.3em] text-amber-400/70 font-medium">Express Service</span>
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-display text-white mt-1 leading-[0.95]">
+                RAPIDE BOOKING
+              </h1>
+              <p className="text-gray-400 text-sm sm:text-base mt-3 max-w-xl leading-relaxed">
+                PH-ready booking with coding checks, local payments, and live branch bay availability.
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-3xl font-bold text-white">Rapide Service Booking</h1>
-            <p className="text-gray-500 text-sm">PH-ready booking with coding checks, local payments, and branch matching</p>
+          <div className="mt-5 bg-amber-500/10 border border-amber-500/20 rounded-xl px-4 py-3 text-amber-300 text-sm max-w-xl">
+            Enter your plate/sticker, choose service mode, and we&apos;ll match the nearest branch with live lift availability.
           </div>
         </div>
+      </div>
 
-        {/* Info Banner */}
-        <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl px-5 py-4 mb-8 text-amber-300 text-sm">
-          Enter your plate/sticker, choose service mode, and we&apos;ll match the nearest branch with live lift availability.
-        </div>
-
+      <section className="pt-10 pb-12 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
         {!isAuthenticated && (
           <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl px-5 py-4 mb-6 flex items-center justify-between gap-4">
             <p className="text-blue-300 text-sm">Sign in to book an appointment and track your service history.</p>
@@ -657,30 +668,46 @@ export default function RapideClient() {
             Select Service
           </h3>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {services.map((service) => (
-              <button
-                key={service.id}
-                onClick={() => handleServiceSelect(service)}
-                className={`p-4 border rounded-xl transition-all text-left cursor-pointer ${
-                  selectedService?.id === service.id
-                    ? "border-amber-500/50 bg-amber-500/5"
-                    : "border-[#2a2a35] bg-[#1e1e28] hover:border-[#3a3a45] hover:bg-[#252530]"
-                }`}
-              >
-                <div className="font-semibold text-white text-sm">{service.name}</div>
-                <div className="text-xs text-gray-500 mt-1">{service.description}</div>
-                <div className="flex justify-between items-center mt-3">
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-500/10 text-blue-400">
-                    ₱{service.basePrice}
-                  </span>
-                  <span className="text-xs text-gray-500 flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
-                    {service.estimatedDurationMinutes} mins
-                  </span>
-                </div>
-              </button>
-            ))}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {services.map((service) => {
+              const isSelected = selectedService?.id === service.id;
+              return (
+                <button
+                  key={service.id}
+                  onClick={() => handleServiceSelect(service)}
+                  className={`group relative p-0 border rounded-2xl transition-all text-left cursor-pointer overflow-hidden ${
+                    isSelected
+                      ? "border-amber-500/60 bg-amber-500/[0.04] shadow-lg shadow-amber-500/10"
+                      : "border-[#2a2a35] bg-[#1e1e28] hover:border-[#3a3a45] hover:-translate-y-0.5 hover:shadow-xl hover:shadow-black/30"
+                  }`}
+                >
+                  {/* Header band */}
+                  <div className={`h-24 flex items-center justify-center relative overflow-hidden ${
+                    isSelected ? "bg-gradient-to-br from-amber-950/60 via-[#1a1400] to-[#1e1e28]" : "bg-[#16161d]"
+                  }`}>
+                    <div className={`absolute inset-0 bg-gradient-to-br ${isSelected ? "from-amber-500/10 to-transparent" : "from-white/[0.02] to-transparent"}`} />
+                    <Wrench className={`w-10 h-10 transition-colors duration-300 ${isSelected ? "text-amber-400/60" : "text-gray-600 group-hover:text-gray-500"}`} />
+                    {isSelected && (
+                      <div className="absolute top-3 right-3 w-6 h-6 rounded-full bg-amber-500 flex items-center justify-center shadow-md shadow-amber-500/40">
+                        <CheckCircle className="w-4 h-4 text-white" />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="p-4">
+                    <div className={`font-semibold text-base mb-1 ${isSelected ? "text-amber-300" : "text-white"}`}>{service.name}</div>
+                    <div className="text-xs text-gray-500 leading-relaxed mb-4">{service.description}</div>
+                    <div className="flex items-center justify-between">
+                      <span className={`text-lg font-bold ${isSelected ? "text-amber-400" : "text-white"}`}>₱{service.basePrice.toLocaleString()}</span>
+                      <span className="text-xs text-gray-500 flex items-center gap-1 bg-[#16161d] border border-[#2a2a35] px-2 py-1 rounded-lg">
+                        <Clock className="w-3 h-3" />
+                        {service.estimatedDurationMinutes} min
+                      </span>
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -703,26 +730,48 @@ export default function RapideClient() {
                   style={{ colorScheme: "dark" }}
                   className="w-full px-4 py-2.5 bg-[#1e1e28] border border-[#2a2a35] rounded-xl text-white text-sm outline-none focus:border-amber-500/50 transition-colors"
                 />
-                <select
-                  value={selectedBranchCode}
-                  onChange={(e) => {
-                    setSelectedBranchCode(e.target.value);
-                    setSelectedBay(null);
-                  }}
-                  style={{ colorScheme: "dark" }}
-                  className="w-full px-4 py-2.5 bg-[#1e1e28] border border-[#2a2a35] rounded-xl text-white text-sm outline-none focus:border-amber-500/50 transition-colors"
-                >
-                  {BRANCHES.map((branch) => {
-                    const distance = branchDistanceKm[branch.code];
-                    const status = branchStatuses[branch.code] || { total: 0, available: 0 };
-                    return (
-                      <option key={branch.code} value={branch.code}>
-                        {branch.name} - {status.available}/{status.total} lifts open
-                        {distance ? ` - ${distance.toFixed(1)} km` : ""}
-                      </option>
-                    );
-                  })}
-                </select>
+              </div>
+
+              {/* Branch Cards */}
+              <p className="text-sm text-gray-400 mb-3">Choose Branch</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                {BRANCHES.map((branch) => {
+                  const distance = branchDistanceKm[branch.code];
+                  const status = branchStatuses[branch.code] || { total: 0, available: 0 };
+                  const isNearest = nearestBranchCode === branch.code;
+                  const isSelectedBranch = selectedBranchCode === branch.code;
+                  return (
+                    <button
+                      key={branch.code}
+                      onClick={() => { setSelectedBranchCode(branch.code); setSelectedBay(null); }}
+                      className={`p-4 border rounded-xl text-left transition-all cursor-pointer ${
+                        isSelectedBranch
+                          ? "border-amber-500/60 bg-amber-500/[0.05] shadow-lg shadow-amber-500/10"
+                          : "border-[#2a2a35] bg-[#1e1e28] hover:border-[#3a3a45] hover:bg-[#252530]"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <MapPin className={`w-4 h-4 shrink-0 ${isSelectedBranch ? "text-amber-400" : "text-gray-500"}`} />
+                          <span className={`text-sm font-semibold ${isSelectedBranch ? "text-amber-300" : "text-white"}`}>{branch.name}</span>
+                        </div>
+                        {isSelectedBranch && (
+                          <span className="w-5 h-5 rounded-full bg-amber-500 flex items-center justify-center shrink-0">
+                            <CheckCircle className="w-3 h-3 text-white" />
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3 text-xs text-gray-500">
+                        {distance != null && (
+                          <span className={isNearest ? "text-emerald-400" : ""}>{distance.toFixed(1)} km away{isNearest ? " (nearest)" : ""}</span>
+                        )}
+                        <span className={`${status.available > 0 ? "text-blue-400" : "text-rose-400"}`}>
+                          {status.available}/{status.total} lifts open
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
 
               {selectedDate && (
@@ -746,11 +795,7 @@ export default function RapideClient() {
                 </div>
               )}
 
-              {nearestBranchCode && (
-                <p className="text-xs text-emerald-400">
-                  Nearest branch suggestion: {BRANCHES.find((b) => b.code === nearestBranchCode)?.name}
-                </p>
-              )}
+              {nearestBranchCode && null}
             </div>
 
             {selectedDate && selectedTime && getFilteredBranchBays().length > 0 && (
