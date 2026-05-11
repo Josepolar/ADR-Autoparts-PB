@@ -11,8 +11,9 @@ export async function GET(
     const order = await db.order.findUnique({
       where: { id },
       include: {
+        user: { select: { id: true, name: true, email: true, phone: true } },
         items: {
-          include: { part: true },
+          include: { part: { select: { name: true, sku: true } } },
         },
         payment: true,
       },
@@ -30,6 +31,47 @@ export async function GET(
     console.error("Error fetching order:", error);
     return NextResponse.json(
       { success: false, message: "Failed to fetch order" },
+      { status: 500 }
+    );
+  }
+}
+
+const VALID_STATUSES = [
+  "PENDING_PAYMENT",
+  "PAYMENT_CONFIRMED",
+  "PROCESSING",
+  "SHIPPED",
+  "DELIVERED",
+  "COMPLETED",
+  "CANCELLED",
+  "REFUNDED",
+];
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const { status } = await request.json();
+
+    if (!status || !VALID_STATUSES.includes(status)) {
+      return NextResponse.json(
+        { success: false, message: "Invalid status" },
+        { status: 400 }
+      );
+    }
+
+    const order = await db.order.update({
+      where: { id },
+      data: { status },
+    });
+
+    return NextResponse.json({ success: true, data: order });
+  } catch (error) {
+    console.error("Error updating order:", error);
+    return NextResponse.json(
+      { success: false, message: "Failed to update order" },
       { status: 500 }
     );
   }

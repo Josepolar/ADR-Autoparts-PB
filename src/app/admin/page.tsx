@@ -37,6 +37,11 @@ import {
   Check,
   XCircle,
   MessageSquare,
+  Eye,
+  ChevronDown,
+  MapPin,
+  CreditCard,
+  Calendar,
 } from "lucide-react";
 import Link from "next/link";
 import LogoutButton from "@/components/auth/logout-button";
@@ -56,9 +61,16 @@ interface Order {
   user?: { email: string; name: string | null };
   status: string;
   totalAmount: number | any;
+  subtotal?: number | any;
+  tax?: number | any;
+  shippingCost?: number | any;
+  shippingAddress?: string | null;
+  shippingCity?: string | null;
+  shippingProvince?: string | null;
+  shippingZip?: string | null;
   createdAt: Date;
-  payment?: { status: string } | null;
-  items?: any[];
+  payment?: { status: string; method: string; xenditInvoiceId?: string | null } | null;
+  items?: { id: string; quantity: number; unitPrice: number | any; totalPrice: number | any; part?: { name: string; sku: string } | null }[];
 }
 
 // Sidebar navigation items
@@ -86,6 +98,9 @@ export default function AdminDashboard() {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [reviewModal, setReviewModal] = useState<{ id: string; type: "quotation" | "booking"; action: "approve" | "reject" | "confirm" | "cancel" } | null>(null);
   const [reviewNotes, setReviewNotes] = useState("");
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [orderDetailLoading, setOrderDetailLoading] = useState(false);
+  const [updatingOrderStatus, setUpdatingOrderStatus] = useState(false);
 
   useEffect(() => {
     loadDashboardData();
@@ -203,6 +218,40 @@ export default function AdminDashboard() {
   }
 
   const unreadCount = notifications.filter((n: any) => !n.isRead).length;
+
+  async function openOrderDetail(orderId: string) {
+    setOrderDetailLoading(true);
+    setSelectedOrder(null);
+    try {
+      const res = await fetch(`/api/orders/${orderId}`);
+      const result = await res.json();
+      if (result.success) setSelectedOrder(result.data);
+    } catch (e) {
+      console.error("Failed to load order detail", e);
+    }
+    setOrderDetailLoading(false);
+  }
+
+  async function updateOrderStatus(orderId: string, status: string) {
+    setUpdatingOrderStatus(true);
+    try {
+      await fetch(`/api/orders/${orderId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      // Refresh both the list and the detail
+      const [listResult, detailResult] = await Promise.all([
+        getOrdersData(),
+        fetch(`/api/orders/${orderId}`).then((r) => r.json()),
+      ]);
+      if (listResult.success) setOrders(listResult.data || []);
+      if (detailResult.success) setSelectedOrder(detailResult.data);
+    } catch (e) {
+      console.error("Failed to update order status", e);
+    }
+    setUpdatingOrderStatus(false);
+  }
 
   const getPageTitle = () => {
     switch (activeTab) {
@@ -587,7 +636,11 @@ export default function AdminDashboard() {
                           <OrderStatusBadge status={order.status} />
                         </td>
                         <td className="py-3.5">
-                          <button className="text-xs text-gray-400 hover:text-white bg-[#1e1e28] hover:bg-[#2a2a35] px-3 py-1.5 rounded-lg transition-colors cursor-pointer">
+                          <button
+                            onClick={() => openOrderDetail(order.id)}
+                            className="text-xs text-gray-400 hover:text-white bg-[#1e1e28] hover:bg-[#2a2a35] px-3 py-1.5 rounded-lg transition-colors cursor-pointer flex items-center gap-1.5"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
                             View
                           </button>
                         </td>
@@ -801,6 +854,137 @@ export default function AdminDashboard() {
               )}
             </div>
           ) : null}
+
+          {/* Order Detail Modal */}
+          {(selectedOrder || orderDetailLoading) && (
+            <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4">
+              <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setSelectedOrder(null)} />
+              <div className="relative bg-[#16161d] border border-[#2a2a35] rounded-t-2xl sm:rounded-2xl w-full sm:max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
+                {/* Header */}
+                <div className="sticky top-0 bg-[#16161d] border-b border-[#2a2a35] px-6 py-4 flex items-center justify-between z-10">
+                  <div>
+                    <p className="text-xs text-gray-500 uppercase tracking-wider">Order Details</p>
+                    <h3 className="text-white font-bold text-lg">#{selectedOrder?.orderNumber ?? "..."}</h3>
+                  </div>
+                  <button onClick={() => setSelectedOrder(null)} className="text-gray-400 hover:text-white p-1.5 rounded-lg hover:bg-[#2a2a35] transition-colors cursor-pointer">
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {orderDetailLoading ? (
+                  <div className="flex items-center justify-center py-16">
+                    <Spinner size="lg" />
+                  </div>
+                ) : selectedOrder ? (
+                  <div className="p-6 space-y-5">
+                    {/* Status + Update */}
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-3 p-4 bg-[#1e1e28] rounded-xl border border-[#2a2a35]">
+                      <div className="flex-1">
+                        <p className="text-xs text-gray-500 mb-1">Current Status</p>
+                        <OrderStatusBadge status={selectedOrder.status} />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="relative">
+                          <select
+                            defaultValue={selectedOrder.status}
+                            onChange={(e) => updateOrderStatus(selectedOrder.id, e.target.value)}
+                            disabled={updatingOrderStatus}
+                            className="appearance-none bg-[#16161d] border border-[#2a2a35] text-white text-sm rounded-lg px-3 py-2 pr-8 outline-none cursor-pointer hover:border-[#3a3a45] transition-colors disabled:opacity-50"
+                          >
+                            <option value="PENDING_PAYMENT">Pending Payment</option>
+                            <option value="PAYMENT_CONFIRMED">Payment Confirmed</option>
+                            <option value="PROCESSING">Processing</option>
+                            <option value="SHIPPED">Shipped</option>
+                            <option value="DELIVERED">Delivered</option>
+                            <option value="COMPLETED">Completed</option>
+                            <option value="CANCELLED">Cancelled</option>
+                            <option value="REFUNDED">Refunded</option>
+                          </select>
+                          <ChevronDown className="w-3.5 h-3.5 text-gray-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+                        </div>
+                        {updatingOrderStatus && <Spinner size="sm" />}
+                      </div>
+                    </div>
+
+                    {/* Customer + Date */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="p-4 bg-[#1e1e28] rounded-xl border border-[#2a2a35]">
+                        <p className="text-xs text-gray-500 mb-1 flex items-center gap-1.5"><Users className="w-3.5 h-3.5" />Customer</p>
+                        <p className="text-white font-medium text-sm">{selectedOrder.user?.name || "—"}</p>
+                        <p className="text-gray-400 text-xs mt-0.5">{selectedOrder.user?.email}</p>
+                      </div>
+                      <div className="p-4 bg-[#1e1e28] rounded-xl border border-[#2a2a35]">
+                        <p className="text-xs text-gray-500 mb-1 flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5" />Order Date</p>
+                        <p className="text-white font-medium text-sm">
+                          {new Date(selectedOrder.createdAt).toLocaleDateString("en-PH", { year: "numeric", month: "short", day: "numeric" })}
+                        </p>
+                        <p className="text-gray-400 text-xs mt-0.5">
+                          {new Date(selectedOrder.createdAt).toLocaleTimeString("en-PH", { hour: "2-digit", minute: "2-digit" })}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Delivery Address */}
+                    {(selectedOrder.shippingAddress || selectedOrder.shippingCity) && (
+                      <div className="p-4 bg-[#1e1e28] rounded-xl border border-[#2a2a35]">
+                        <p className="text-xs text-gray-500 mb-2 flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5" />Delivery Address</p>
+                        <p className="text-white text-sm">
+                          {[selectedOrder.shippingAddress, selectedOrder.shippingCity, selectedOrder.shippingProvince, selectedOrder.shippingZip].filter(Boolean).join(", ")}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Payment */}
+                    <div className="p-4 bg-[#1e1e28] rounded-xl border border-[#2a2a35]">
+                      <p className="text-xs text-gray-500 mb-2 flex items-center gap-1.5"><CreditCard className="w-3.5 h-3.5" />Payment</p>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-white text-sm font-medium">{selectedOrder.payment?.method ?? "N/A"}</p>
+                          {selectedOrder.payment?.xenditInvoiceId && (
+                            <p className="text-gray-500 text-xs mt-0.5">Ref: {selectedOrder.payment.xenditInvoiceId}</p>
+                          )}
+                        </div>
+                        <OrderStatusBadge status={selectedOrder.payment?.status ?? "PENDING"} />
+                      </div>
+                    </div>
+
+                    {/* Order Items */}
+                    <div className="p-4 bg-[#1e1e28] rounded-xl border border-[#2a2a35]">
+                      <p className="text-xs text-gray-500 mb-3 flex items-center gap-1.5"><Package className="w-3.5 h-3.5" />Items ({selectedOrder.items?.length ?? 0})</p>
+                      <div className="space-y-2">
+                        {(selectedOrder.items ?? []).map((item: any, i: number) => (
+                          <div key={i} className="flex items-center justify-between py-2 border-b border-[#2a2a35] last:border-0">
+                            <div>
+                              <p className="text-white text-sm font-medium">{item.part?.name ?? "Part"}</p>
+                              {item.part?.sku && <p className="text-gray-500 text-xs">SKU: {item.part.sku}</p>}
+                              <p className="text-gray-400 text-xs">Qty: {item.quantity}</p>
+                            </div>
+                            <p className="text-white font-semibold text-sm">₱{Number(item.totalPrice ?? 0).toLocaleString()}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Totals */}
+                    <div className="p-4 bg-[#1e1e28] rounded-xl border border-[#2a2a35] space-y-2">
+                      <div className="flex justify-between text-sm text-gray-400">
+                        <span>Subtotal</span><span>₱{Number(selectedOrder.subtotal ?? 0).toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between text-sm text-gray-400">
+                        <span>Tax (12%)</span><span>₱{Number(selectedOrder.tax ?? 0).toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between text-sm text-gray-400">
+                        <span>Shipping</span><span className="text-green-400">FREE</span>
+                      </div>
+                      <div className="flex justify-between font-bold text-white pt-2 border-t border-[#2a2a35]">
+                        <span>Total</span><span className="text-red-400">₱{Number(selectedOrder.totalAmount ?? 0).toLocaleString()}</span>
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          )}
 
           {/* Review Modal */}
           {reviewModal && (

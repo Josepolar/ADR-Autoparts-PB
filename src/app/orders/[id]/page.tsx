@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useEffect, useState, useCallback } from "react";
+import { useParams, useSearchParams } from "next/navigation";
 import { Card, Button, Badge, Spinner } from "@/components/ui/modern-components";
-import { CheckCircle, Truck, Calendar } from "lucide-react";
+import { CheckCircle, Truck, Calendar, RefreshCw } from "lucide-react";
 import Link from "next/link";
 
 interface OrderDetails {
@@ -19,31 +19,72 @@ interface OrderDetails {
 
 export default function OrderConfirmationPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const orderId = params.id as string;
   const [order, setOrder] = useState<OrderDetails | null>(null);
   const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
 
-  useEffect(() => {
-    const fetchOrder = async () => {
-      try {
-        const response = await fetch(`/api/orders/${orderId}`);
-        const result = await response.json();
-        if (result.success && result.data) {
-          setOrder(result.data);
-        }
-      } catch (error) {
-        console.error("Error fetching order:", error);
-      }
-      setLoading(false);
-    };
-
-    fetchOrder();
+  const syncPayment = useCallback(async () => {
+    setSyncing(true);
+    try {
+      await fetch("/api/payment/xendit/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId }),
+      });
+    } catch {
+      // Non-fatal
+    }
+    setSyncing(false);
   }, [orderId]);
 
-  if (loading) {
+  const fetchOrder = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/orders/${orderId}`);
+      const result = await response.json();
+      if (result.success && result.data) {
+        setOrder(result.data);
+      }
+    } catch (error) {
+      console.error("Error fetching order:", error);
+    }
+    setLoading(false);
+  }, [orderId]);
+
+  useEffect(() => {
+    const init = async () => {
+      // Sync from Xendit if: returned from payment page OR order has XENDIT pending payment
+      const paid = searchParams.get("paid");
+      if (paid === "true") {
+        await syncPayment();
+      }
+      await fetchOrder();
+    };
+    init();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orderId]);
+
+  // After first load: if XENDIT + still PENDING, auto-sync once
+  useEffect(() => {
+    if (
+      order &&
+      order.payment?.method === "XENDIT" &&
+      order.payment?.status === "PENDING" &&
+      searchParams.get("paid") !== "true"
+    ) {
+      syncPayment().then(() => fetchOrder());
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [order?.id]);
+
+  if (loading || syncing) {
     return (
       <main className="min-h-screen bg-nardo-gray-900 flex items-center justify-center">
-        <Spinner size="lg" />
+        <div className="text-center">
+          <Spinner size="lg" />
+          {syncing && <p className="text-gray-400 mt-3 text-sm">Confirming your payment…</p>}
+        </div>
       </main>
     );
   }
@@ -196,13 +237,26 @@ export default function OrderConfirmationPage() {
 
                 <div>
                   <p className="text-sm text-nardo-gray-400 mb-1">Payment Status</p>
-                  <Badge
-                    variant={
-                      order?.payment?.status === "COMPLETED" ? "success" : "warning"
-                    }
-                  >
-                    {order?.payment?.status || "PENDING"}
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge
+                      variant={
+                        order?.payment?.status === "COMPLETED" ? "success" : "warning"
+                      }
+                    >
+                      {order?.payment?.status || "PENDING"}
+                    </Badge>
+                    {order?.payment?.method === "XENDIT" && order?.payment?.status !== "COMPLETED" && (
+                      <button
+                        onClick={async () => { await syncPayment(); await fetchOrder(); }}
+                        disabled={syncing}
+                        className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 disabled:opacity-50 cursor-pointer"
+                        title="Refresh payment status from Xendit"
+                      >
+                        <RefreshCw className={`w-3.5 h-3.5 ${syncing ? "animate-spin" : ""}`} />
+                        {syncing ? "Checking…" : "Refresh"}
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 <div className="pt-6 border-t border-nardo-gray-700">
