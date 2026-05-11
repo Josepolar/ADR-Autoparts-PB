@@ -253,7 +253,7 @@ export default function Home() {
 
         ScrollTrigger.create({
           trigger: el,
-          start: "top 90%",
+          start: "top bottom",
           onEnter: () => {
             gsap.to(obj, {
               val: target,
@@ -285,7 +285,7 @@ export default function Home() {
           y: 0,
           duration: 1,
           ease: "power3.out",
-          scrollTrigger: { trigger: el, start: "top 87%", once: true },
+          scrollTrigger: { trigger: el, start: "top bottom", once: true },
         });
       });
 
@@ -301,7 +301,7 @@ export default function Home() {
             duration: 0.7,
             stagger: 0.1,
             ease: "power3.out",
-            scrollTrigger: { trigger: c, start: "top 87%", once: true },
+            scrollTrigger: { trigger: c, start: "top bottom", once: true },
           }
         );
       });
@@ -316,7 +316,7 @@ export default function Home() {
             scale: 1,
             duration: 0.9,
             ease: "back.out(1.4)",
-            scrollTrigger: { trigger: el, start: "top 87%", once: true },
+            scrollTrigger: { trigger: el, start: "top bottom", once: true },
           }
         );
       });
@@ -330,7 +330,7 @@ export default function Home() {
             clipPath: "inset(0 0% 0 0)",
             duration: 1.2,
             ease: "power4.inOut",
-            scrollTrigger: { trigger: el, start: "top 87%", once: true },
+            scrollTrigger: { trigger: el, start: "top bottom", once: true },
           }
         );
       });
@@ -703,28 +703,27 @@ export default function Home() {
         <section className="py-16 sm:py-20 lg:py-24 px-4 sm:px-6 lg:px-12 border-t border-white/[0.04]">
           <div className="max-w-[90rem] mx-auto">
             <div className="flex items-end justify-between mb-10 sm:mb-12">
-              <div data-reveal="up">
-                <span className="invisible text-red-400/70 text-[11px] uppercase tracking-[0.3em] font-medium">
+              <div>
+                <span className="text-red-400/70 text-[11px] uppercase tracking-[0.3em] font-medium">
                   Featured
                 </span>
-                <h2 className="invisible text-3xl sm:text-4xl lg:text-5xl font-display text-white mt-2 leading-[0.95]">
+                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-display text-white mt-2 leading-[0.95]">
                   SHOP AUTO PARTS
                 </h2>
               </div>
               <Link
                 href="/parts"
-                data-reveal="right"
-                className="invisible hidden sm:inline-flex items-center gap-2 text-sm font-medium text-gray-400 hover:text-white hover:gap-3 transition-all duration-300"
+                className="hidden sm:inline-flex items-center gap-2 text-sm font-medium text-gray-400 hover:text-white hover:gap-3 transition-all duration-300"
               >
                 View All Parts
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
-            <div data-stagger className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {featuredParts.map((part) => (
                 <div
                   key={part.id}
-                  className="invisible group bg-[#16161d] border border-[#2a2a35] rounded-3xl flex flex-col hover:border-[#3a3a45] hover:-translate-y-1 hover:shadow-2xl hover:shadow-black/40 transition-all duration-300 overflow-hidden"
+                  className="group bg-[#16161d] border border-[#2a2a35] rounded-3xl flex flex-col hover:border-[#3a3a45] hover:-translate-y-1 hover:shadow-2xl hover:shadow-black/40 transition-all duration-300 overflow-hidden"
                 >
                   <div className="relative w-full h-56 bg-[#1a1a22] overflow-hidden">
                     {part.imageUrl ? (
