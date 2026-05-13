@@ -7,7 +7,6 @@ import { getUserImmoRequests } from "@/server/actions";
 import { useToast } from "@/context/toast-context";
 import { Spinner } from "@/components/ui/modern-components";
 import {
-  Cpu,
   Download,
   FileText,
   CheckCircle,
@@ -16,8 +15,6 @@ import {
   Home,
   ChevronRight,
   Calendar,
-  User,
-  MapPin,
   Zap,
 } from "lucide-react";
 import Link from "next/link";
@@ -81,8 +78,13 @@ export default function RequestsClient() {
     setLoading(true);
     try {
       const result = await getUserImmoRequests(session?.user?.id!);
-      if (result.success) {
-        setRequests(result.data || []);
+      if (result.success && result.data) {
+        // Convert Decimal types to numbers
+        const converted = result.data.map((req: any) => ({
+          ...req,
+          basePrice: Number(req.basePrice),
+        }));
+        setRequests(converted);
       } else {
         addToast("Failed to load requests", "error");
       }

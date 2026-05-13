@@ -10,7 +10,6 @@ import {
   approveQuotation,
   rejectQuotation,
   updateBookingStatus,
-  updateImmoRequestStatus,
 } from "@/server/actions";
 import {
   Spinner,
@@ -43,11 +42,13 @@ import {
   MapPin,
   CreditCard,
   Calendar,
+  Cpu,
 } from "lucide-react";
 import Link from "next/link";
 import LogoutButton from "@/components/auth/logout-button";
 import InventoryManagement from "@/components/admin/inventory-management";
 import StaffManagement from "@/components/admin/staff-management";
+import FirmwareUploadModal from "@/components/admin/firmware-upload-modal";
 
 interface Stats {
   totalUsers: number;
@@ -81,6 +82,7 @@ const sidebarItems = [
   { id: "quotations", label: "Quotations", icon: ClipboardList },
   { id: "bookings", label: "Bookings", icon: CalendarCheck },
   { id: "inventory", label: "Inventory", icon: Package },
+  { id: "firmware", label: "Firmware Library", icon: Cpu },
   { id: "staff", label: "Staff", icon: Users },
   { id: "immo", label: "Tuning Requests", icon: Wrench },
 ];
@@ -94,11 +96,12 @@ export default function AdminDashboard() {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"overview" | "orders" | "inventory" | "staff" | "immo" | "quotations" | "bookings">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "orders" | "inventory" | "staff" | "immo" | "quotations" | "bookings" | "firmware">("overview");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [reviewModal, setReviewModal] = useState<{ id: string; type: "quotation" | "booking"; action: "approve" | "reject" | "confirm" | "cancel" } | null>(null);
   const [reviewNotes, setReviewNotes] = useState("");
+  const [showFirmwareUploadModal, setShowFirmwareUploadModal] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [orderDetailLoading, setOrderDetailLoading] = useState(false);
   const [updatingOrderStatus, setUpdatingOrderStatus] = useState(false);
@@ -263,6 +266,8 @@ export default function AdminDashboard() {
       case "inventory": return "Inventory";
       case "staff": return "Staff Management";
       case "immo": return "Tuning Requests";
+      case "firmware": return "Firmware Library";
+      default: return "Dashboard";
     }
   };
 
@@ -726,6 +731,30 @@ export default function AdminDashboard() {
             </div>
           ) : activeTab === "inventory" ? (
             <InventoryManagement />
+          ) : activeTab === "firmware" ? (
+            <div className="space-y-4">
+              <div className="bg-[#16161d] border border-[#2a2a35] rounded-2xl p-5">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
+                  <div>
+                    <h2 className="text-white font-semibold text-lg flex items-center gap-2">
+                      <Cpu className="w-5 h-5 text-red-400" />
+                      Firmware Library
+                    </h2>
+                    <p className="text-gray-500 text-sm mt-0.5">Manage downloadable ECU firmware files</p>
+                  </div>
+                  <button
+                    onClick={() => setShowFirmwareUploadModal(true)}
+                    className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm font-medium"
+                  >
+                    + Upload Firmware
+                  </button>
+                </div>
+
+                <div className="text-center py-12 text-gray-500">
+                  <p>Firmware files will appear here once created</p>
+                </div>
+              </div>
+            </div>
           ) : activeTab === "staff" ? (
             <StaffManagement />
           ) : activeTab === "quotations" ? (
@@ -1051,6 +1080,15 @@ export default function AdminDashboard() {
               </div>
             </div>
           )}
+
+          {/* Firmware Upload Modal */}
+          <FirmwareUploadModal
+            isOpen={showFirmwareUploadModal}
+            onClose={() => setShowFirmwareUploadModal(false)}
+            onSuccess={() => {
+              setShowFirmwareUploadModal(false);
+            }}
+          />
         </main>
       </div>
     </div>

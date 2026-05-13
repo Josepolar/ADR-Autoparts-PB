@@ -960,3 +960,46 @@ export async function updateImmoRequestStatus(
     return { success: false, error: "Failed to update request" };
   }
 }
+
+export async function createFirmwareFile(data: {
+  fileName: string;
+  description?: string;
+  fileUrl: string;
+  price: number;
+  version: string;
+  status: "STOCK" | "TUNED" | "CUSTOM";
+  fileHash: string;
+  fileSizeBytes: number;
+  ecuId?: string;
+}) {
+  try {
+    const firmware = await db.firmwareFile.create({
+      data: {
+        fileName: data.fileName,
+        description: data.description || null,
+        fileUrl: data.fileUrl,
+        price: new Decimal(data.price),
+        version: data.version,
+        status: data.status,
+        fileHash: data.fileHash,
+        fileSizeBytes: BigInt(data.fileSizeBytes),
+        ecuId: data.ecuId || null,
+        uploadedBy: "admin",
+      },
+      include: {
+        ecu: {
+          include: {
+            vehicle: true,
+          },
+        },
+      },
+    });
+
+    revalidatePath("/autoecu");
+    revalidatePath("/admin");
+    return { success: true, data: serialize(firmware) };
+  } catch (error) {
+    console.error("Error creating firmware file:", error);
+    return { success: false, error: "Failed to create firmware file" };
+  }
+}

@@ -3,10 +3,29 @@ import { db } from "@/server/db";
 
 export async function POST(request: NextRequest) {
   try {
-    // In production, verify user is authenticated and has appropriate role
-    // For MVP, allow authenticated users to upload
-    // In production: const userId = extractFromJWT(request);
-    const userId = "test-user-1";
+    // Get user email from session cookie (custom auth system)
+    const userEmail = request.cookies.get("userEmail")?.value;
+    
+    if (!userEmail) {
+      return NextResponse.json(
+        { success: false, message: "User not authenticated" },
+        { status: 401 }
+      );
+    }
+
+    // Look up user by email
+    const user = await db.user.findUnique({
+      where: { email: userEmail },
+    });
+
+    if (!user) {
+      return NextResponse.json(
+        { success: false, message: "User not found" },
+        { status: 401 }
+      );
+    }
+
+    const userId = user.id;
 
     const formData = await request.formData();
     const file = formData.get("file") as File;
@@ -17,18 +36,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { success: false, message: "Missing required fields" },
         { status: 400 }
-      );
-    }
-
-    // Verify user exists
-    const user = await db.user.findUnique({
-      where: { id: userId },
-    });
-
-    if (!user) {
-      return NextResponse.json(
-        { success: false, message: "User not found" },
-        { status: 401 }
       );
     }
 
