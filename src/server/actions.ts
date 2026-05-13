@@ -817,3 +817,146 @@ export async function markAllNotificationsRead(role: "ADMIN" | "MECHANIC") {
     return { success: false, error: "Failed to update notifications" };
   }
 }
+
+// ============================================
+// AUTOECU FIRMWARE DOWNLOAD & PAYMENT ACTIONS
+// ============================================
+
+export async function getUserImmoRequests(userId: string) {
+  try {
+    const requests = await db.immoRequest.findMany({
+      where: { userId },
+      include: {
+        vehicle: true,
+        stockFile: true,
+      },
+      orderBy: { createdAt: "desc" },
+    });
+    return { success: true, data: serialize(requests) };
+  } catch (error) {
+    console.error("Error fetching user immo requests:", error);
+    return { success: false, error: "Failed to fetch requests" };
+  }
+}
+
+export async function initiateFirmwareDownload(
+  firmwareFileId: string,
+  userId: string
+) {
+  try {
+    // Check if user has already paid for this firmware
+    const existingOrder = await db.order.findFirst({
+      where: {
+        userId,
+        items: {
+          some: {
+            firmwareFileId,
+          },
+        },
+        payment: {
+          status: "COMPLETED",
+        },
+      },
+    });
+
+    if (existingOrder) {
+      // User has already purchased, get download link
+      const firmware = await db.firmwareFile.findUnique({
+        where: { id: firmwareFileId },
+      });
+
+      if (!firmware) {
+        return { success: false, error: "Firmware file not found" };
+      }
+
+      // Record download
+      await db.firmwareFile.update({
+        where: { id: firmwareFileId },
+        data: { purchaseCount: { increment: 1 } },
+      });
+
+      return {
+        success: true,
+        data: {
+          downloadUrl: firmware.fileUrl,
+          fileName: firmware.fileName,
+          message: "Download ready",
+        },
+      };
+    }
+
+    // User needs to pay
+    return {
+      success: false,
+      error: "PAYMENT_REQUIRED",
+      data: { firmwareFileId },
+    };
+  } catch (error) {
+    console.error("Error initiating firmware download:", error);
+    return { success: false, error: "Failed to process download request" };
+  }
+}
+
+export async function createImmoRequest(
+  userId: string,
+  vehicleId: string,
+  stockFileId?: string,
+  basePrice: number = 5000
+) {
+  try {
+    const immoRequest = await db.immoRequest.create({
+      data: {
+        userId,
+        vehicleId,
+        stockFileId: stockFileId || null,
+        status: "PENDING_UPLOAD",
+        basePrice,
+        totalPrice: basePrice,
+      },
+      include: {
+        vehicle: true,
+        stockFile: true,
+      },
+    });
+
+    revalidatePath("/autoecu/requests");
+    return { success: true, data: serialize(immoRequest) };
+  } catch (error) {
+    console.error("Error creating immo request:", error);
+    return { success: false, error: "Failed to create request" };
+  }
+}
+
+export async function updateImmoRequestStatus(
+  requestId: string,
+  status: string,
+  modifiedFileUrl?: string,
+  adminNotes?: string
+) {
+  try {
+    const updateData: Record<string, unknown> = { status };
+
+    if (modifiedFileUrl) updateData.modifiedFileUrl = modifiedFileUrl;
+    if (adminNotes) updateData.adminNotes = adminNotes;
+    if (status === "READY_FOR_DOWNLOAD") {
+      updateData.completedAt = new Date();
+    }
+
+    const immoRequest = await db.immoRequest.update({
+      where: { id: requestId },
+      data: updateData as any,
+      include: {
+        vehicle: true,
+        stockFile: true,
+        user: true,
+      },
+    });
+
+    revalidatePath("/admin");
+    revalidatePath("/autoecu/requests");
+    return { success: true, data: serialize(immoRequest) };
+  } catch (error) {
+    console.error("Error updating immo request:", error);
+    return { success: false, error: "Failed to update request" };
+  }
+}

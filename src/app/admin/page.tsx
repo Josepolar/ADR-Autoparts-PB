@@ -10,6 +10,7 @@ import {
   approveQuotation,
   rejectQuotation,
   updateBookingStatus,
+  updateImmoRequestStatus,
 } from "@/server/actions";
 import {
   Spinner,
@@ -669,31 +670,54 @@ export default function AdminDashboard() {
                     <p className="text-gray-500 text-sm">No tuning requests at this time.</p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 gap-4">
                     {immoRequests.map((request: any) => (
                       <div
                         key={request.id}
                         className="p-4 bg-[#1e1e28] border border-[#2a2a35] rounded-xl hover:border-[#3a3a45] transition-colors"
                       >
                         <div className="flex justify-between items-start mb-3">
-                          <h3 className="font-semibold text-white text-sm">
-                            {request.vehicle?.year}{" "}
-                            {request.vehicle?.make}{" "}
-                            {request.vehicle?.model}
-                          </h3>
+                          <div>
+                            <h3 className="font-semibold text-white text-sm">
+                              {request.vehicle?.year}{" "}
+                              {request.vehicle?.make}{" "}
+                              {request.vehicle?.model}
+                            </h3>
+                            <p className="text-xs text-gray-500 mt-1">
+                              User: {request.user?.email}
+                            </p>
+                          </div>
                           <OrderStatusBadge status={request.status} />
                         </div>
-                        <p className="text-xs text-gray-500 mb-1">
-                          User: {request.user?.email}
+                        <p className="text-xs text-gray-400 mb-3">
+                          Uploaded: {new Date(request.createdAt).toLocaleDateString()} • Amount: ₱{Number(request.totalPrice).toLocaleString()}
                         </p>
-                        <p className="text-xs text-gray-500">
-                          Uploaded: {new Date(request.createdAt).toLocaleDateString()}
-                        </p>
-                        {request.status === "PENDING_UPLOAD" && (
-                          <button className="mt-3 w-full text-sm font-medium text-white bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 rounded-lg py-2 transition-colors cursor-pointer">
-                            Download &amp; Process
-                          </button>
+                        {request.adminNotes && (
+                          <p className="text-xs text-gray-400 mb-2 italic">Admin Notes: {request.adminNotes}</p>
                         )}
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {request.status === "PENDING_UPLOAD" && (
+                            <button 
+                              onClick={() => setReviewModal({ id: request.id, type: "quotation", action: "approve" })}
+                              className="text-sm font-medium text-white bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/30 rounded-lg px-3 py-1.5 transition-colors cursor-pointer"
+                            >
+                              Review & Process
+                            </button>
+                          )}
+                          {(request.status === "PROCESSING" || request.status === "PENDING_UPLOAD") && (
+                            <button 
+                              onClick={() => alert("File upload feature - integrate with S3")}
+                              className="text-sm font-medium text-white bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 rounded-lg px-3 py-1.5 transition-colors cursor-pointer"
+                            >
+                              Upload Tuned File
+                            </button>
+                          )}
+                          {request.status === "READY_FOR_DOWNLOAD" && (
+                            <span className="text-xs text-green-400 bg-green-500/10 px-2.5 py-1 rounded-lg border border-green-500/20">
+                              Ready for User Download
+                            </span>
+                          )}
+                        </div>
                       </div>
                     ))}
                   </div>

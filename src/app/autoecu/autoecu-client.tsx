@@ -1,7 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getFirmwareFiles } from "@/server/actions";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { getFirmwareFiles, initiateFirmwareDownload } from "@/server/actions";
+import { useToast } from "@/context/toast-context";
 import { Spinner } from "@/components/ui/modern-components";
 import { Download, Upload, CheckCircle, Cpu, Home, ChevronRight } from "lucide-react";
 import Link from "next/link";
@@ -32,6 +35,10 @@ export default function AutoECUClient() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "STOCK" | "TUNED">("all");
   const [makeFilter, setMakeFilter] = useState<string>("all");
+  const { data: session } = useSession();
+  const router = useRouter();
+  const { addToast } = useToast();
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   useEffect(() => {
     loadFirmware();
@@ -44,6 +51,42 @@ export default function AutoECUClient() {
       setFirmware(result.data || []);
     }
     setLoading(false);
+  }
+
+  async function handleDownload(fileId: string, fileName: string) {
+    // Check authentication
+    if (!session?.user?.id) {
+      addToast("Please create an account or sign in to download", "warning");
+      router.push("/auth/signin");
+      return;
+    }
+
+    setDownloadingId(fileId);
+    try {
+      const result = await initiateFirmwareDownload(fileId, session.user.id);
+
+      if (result.success && result.data?.downloadUrl) {
+        // Download succeeded - file already purchased
+        const link = document.createElement("a");
+        link.href = result.data.downloadUrl;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        addToast("Download started successfully", "success");
+      } else if (result.error === "PAYMENT_REQUIRED") {
+        // Payment needed
+        addToast("Payment required to download this file", "info");
+        router.push(`/checkout?firmwareId=${fileId}`);
+      } else {
+        addToast(result.error || "Failed to download file", "error");
+      }
+    } catch (error) {
+      console.error("Download error:", error);
+      addToast("An error occurred during download", "error");
+    } finally {
+      setDownloadingId(null);
+    }
   }
 
   const filteredFirmware = firmware.filter(
@@ -181,9 +224,13 @@ export default function AutoECUClient() {
                     </span>
                   </div>
 
-                  <button className="w-full mt-4 py-2.5 bg-red-500 text-white font-medium rounded-xl hover:bg-red-600 transition-all duration-200 text-sm flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-red-500/20">
+                  <button 
+                    onClick={() => handleDownload(file.id, file.fileName)}
+                    disabled={downloadingId === file.id}
+                    className="w-full mt-4 py-2.5 bg-red-500 text-white font-medium rounded-xl hover:bg-red-600 transition-all duration-200 text-sm flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-red-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
                     <Download className="w-4 h-4" />
-                    Download
+                    {downloadingId === file.id ? "Downloading..." : "Download"}
                   </button>
                 </div>
               </div>

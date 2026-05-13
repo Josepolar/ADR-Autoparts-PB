@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { SessionProvider } from "next-auth/react";
 import { CartProvider } from "@/context/cart-context";
 import { AuthProvider } from "@/context/auth-context";
 import { ThemeProvider } from "@/context/theme-context";
+import { ToastProvider } from "@/context/toast-context";
+import { ToastContainer } from "@/components/toast-container";
 import { Navbar } from "@/components/navbar";
 
 export const metadata: Metadata = {
@@ -38,14 +41,19 @@ export default function RootLayout({
         <meta httpEquiv="Expires" content="0" />
       </head>
       <body className="bg-[#0a0a0f] text-white transition-colors duration-300 antialiased">
-        <ThemeProvider>
-          <AuthProvider>
-          <CartProvider>
-            <Navbar />
-            {children}
-          </CartProvider>
-          </AuthProvider>
-        </ThemeProvider>
+        <SessionProvider>
+          <ThemeProvider>
+            <ToastProvider>
+              <AuthProvider>
+                <CartProvider>
+                  <Navbar />
+                  <ToastContainer />
+                  {children}
+                </CartProvider>
+              </AuthProvider>
+            </ToastProvider>
+          </ThemeProvider>
+        </SessionProvider>
       </body>
     </html>
   );
